@@ -1,16 +1,9 @@
 use rand::Rng;
-use std::io::prelude::*;
 
 // set global constants
-const PROGRAM_DIR: once_cell::sync::Lazy<std::path::PathBuf> = once_cell::sync::Lazy::new(|| {
-    std::path::PathBuf::from(std::env::current_exe().unwrap().parent().unwrap())
-});
+const COLORSCRIPTS_DIR: include_dir::Dir = include_dir::include_dir!("./colorscripts");
 
-const COLORSCRIPTS_DIR: once_cell::sync::Lazy<std::path::PathBuf> =
-    once_cell::sync::Lazy::new(|| PROGRAM_DIR.join("colorscripts"));
-
-const POKEMON_DATA_PATH: once_cell::sync::Lazy<std::path::PathBuf> =
-    once_cell::sync::Lazy::new(|| PROGRAM_DIR.join("pokemon.json"));
+const POKEMON_JSON: &str = std::include_str!("../pokemon.json");
 
 const REGULAR_SUBDIR: &str = "regular";
 const SHINY_SUBDIR: &str = "shiny";
@@ -31,44 +24,21 @@ const GENERATIONS: [(&str, (u32, u32)); 8] = [
     ("8", (810, 898)),
 ];
 
-fn validate_files() -> std::io::Result<()> {
-    let colorscripts_dir = COLORSCRIPTS_DIR;
-    let pokemon_data_path = POKEMON_DATA_PATH;
-
-    if !colorscripts_dir.exists() {
-        println!(
-            "Colorscripts directory not found at {}",
-            colorscripts_dir.display()
-        );
-        std::process::exit(1);
+fn print_file(filepath: &str) -> std::io::Result<()> {
+    if let Some(file) = COLORSCRIPTS_DIR.get_file(filepath) {
+        let content = std::str::from_utf8(file.contents()).unwrap();
+        println!("{}", content);
+        Ok(())
+    } else {
+        Err(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "File not found",
+        ))
     }
-
-    if !pokemon_data_path.exists() {
-        println!(
-            "Pokemon data file not found at {}",
-            pokemon_data_path.display()
-        );
-        std::process::exit(1);
-    }
-
-    Ok(())
-}
-
-fn print_file(filepath: &std::path::Path) -> std::io::Result<()> {
-    let file = std::fs::File::open(filepath)?;
-    let reader = std::io::BufReader::new(file);
-
-    for line in reader.lines() {
-        println!("{}", line?);
-    }
-
-    Ok(())
 }
 
 fn list_pokemon_names() -> std::io::Result<()> {
-    let file = std::fs::File::open(POKEMON_DATA_PATH.as_path())?;
-    let reader = std::io::BufReader::new(file);
-    let pokemon_json: serde_json::Value = serde_json::from_reader(reader)?;
+    let pokemon_json: serde_json::Value = serde_json::from_str(POKEMON_JSON)?;
 
     let mut count = 0;
 
@@ -99,13 +69,10 @@ fn show_pokemon_by_name(
     form: Option<&str>,
 ) -> std::io::Result<()> {
     // set variables
-    let base_path = COLORSCRIPTS_DIR;
     let color_subdir = if shiny { SHINY_SUBDIR } else { REGULAR_SUBDIR };
     let size_subdir = if is_large { LARGE_SUBDIR } else { SMALL_SUBDIR };
 
-    let file = std::fs::File::open(POKEMON_DATA_PATH.as_path())?;
-    let reader = std::io::BufReader::new(file);
-    let pokemon_json: serde_json::Value = serde_json::from_reader(reader)?;
+    let pokemon_json: serde_json::Value = serde_json::from_str(POKEMON_JSON)?;
 
     let pokemon_names: Vec<&str> = pokemon_json
         .as_array()
@@ -150,8 +117,6 @@ fn show_pokemon_by_name(
         }
     }
 
-    let pokemon_file = base_path.join(size_subdir).join(color_subdir).join(&name);
-
     if show_title {
         if shiny {
             println!("{} (shiny)", name);
@@ -160,7 +125,13 @@ fn show_pokemon_by_name(
         }
     }
 
-    print_file(&pokemon_file)
+    // Construct the embedded file path
+    let file_path = format!("{}/{}/{}", size_subdir, color_subdir, name);
+
+    // Use the adjusted function to print file contents from embedded resources
+    print_file(&file_path)?;
+
+    Ok(())
 }
 
 fn show_random_pokemon(
@@ -184,9 +155,7 @@ fn show_random_pokemon(
         generations
     };
 
-    let file = std::fs::File::open(POKEMON_DATA_PATH.as_path())?;
-    let reader = std::io::BufReader::new(file);
-    let pokemon_json: serde_json::Value = serde_json::from_reader(reader)?;
+    let pokemon_json: serde_json::Value = serde_json::from_str(POKEMON_JSON)?;
     let pokemon: Vec<String> = pokemon_json
         .as_array()
         .unwrap()
@@ -215,7 +184,7 @@ fn show_random_pokemon(
 
 fn main() {
     // validate files first
-    validate_files().unwrap();
+    // validate_files().unwrap();
 
     let matches = clap::App::new("pokemon-colorscripts")
         .about("CLI utility to print out unicode image of a pokemon in your shell")
