@@ -2,15 +2,15 @@ use rand::Rng;
 use std::io::prelude::*;
 
 // set global constants
-const PROGRAM: once_cell::sync::Lazy<std::path::PathBuf> =
-    once_cell::sync::Lazy::new(|| std::env::current_exe().unwrap());
-
 const PROGRAM_DIR: once_cell::sync::Lazy<std::path::PathBuf> = once_cell::sync::Lazy::new(|| {
     std::path::PathBuf::from(std::env::current_exe().unwrap().parent().unwrap())
 });
 
 const COLORSCRIPTS_DIR: once_cell::sync::Lazy<std::path::PathBuf> =
     once_cell::sync::Lazy::new(|| PROGRAM_DIR.join("colorscripts"));
+
+const POKEMON_DATA_PATH: once_cell::sync::Lazy<std::path::PathBuf> =
+    once_cell::sync::Lazy::new(|| PROGRAM_DIR.join("pokemon.json"));
 
 const REGULAR_SUBDIR: &str = "regular";
 const SHINY_SUBDIR: &str = "shiny";
@@ -42,8 +42,8 @@ fn print_file(filepath: &std::path::Path) -> std::io::Result<()> {
     Ok(())
 }
 
-fn list_pokemon_names(filepath: &std::path::Path) -> std::io::Result<()> {
-    let file = std::fs::File::open(filepath)?;
+fn list_pokemon_names() -> std::io::Result<()> {
+    let file = std::fs::File::open(POKEMON_DATA_PATH.as_path())?;
     let reader = std::io::BufReader::new(file);
     let pokemon_json: serde_json::Value = serde_json::from_reader(reader)?;
 
@@ -77,7 +77,7 @@ fn show_pokemon_by_name(
     let color_subdir = if shiny { SHINY_SUBDIR } else { REGULAR_SUBDIR };
     let size_subdir = if is_large { LARGE_SUBDIR } else { SMALL_SUBDIR };
 
-    let file = std::fs::File::open(PROGRAM_DIR.join("pokemon.json"))?;
+    let file = std::fs::File::open(POKEMON_DATA_PATH.as_path())?;
     let reader = std::io::BufReader::new(file);
     let pokemon_json: serde_json::Value = serde_json::from_reader(reader)?;
 
@@ -145,20 +145,20 @@ fn show_random_pokemon(
 ) -> std::io::Result<()> {
     let mut rng = rand::thread_rng();
 
-    let (start_gen, end_gen) = if generations.is_empty() {
-        ("1", "8")
+    let start_gen = if generations.is_empty() {
+        "1"
     } else if generations.contains(",") {
         let gens: Vec<&str> = generations.split(",").collect();
         let gen = gens[rng.gen_range(0..gens.len())];
-        (gen, gen)
+        gen
     } else if generations.contains("-") {
         let gens: Vec<&str> = generations.split("-").collect();
-        (gens[0], gens[1])
+        gens[0]
     } else {
-        (generations, generations)
+        generations
     };
 
-    let file = std::fs::File::open(PROGRAM_DIR.join("pokemon.json"))?;
+    let file = std::fs::File::open(POKEMON_DATA_PATH.as_path())?;
     let reader = std::io::BufReader::new(file);
     let pokemon_json: serde_json::Value = serde_json::from_reader(reader)?;
     let pokemon: Vec<String> = pokemon_json
@@ -187,10 +187,84 @@ fn show_random_pokemon(
     Ok(())
 }
 
+// fn main() {
+//     // println!("{}", PROGRAM.display());
+//     // println!("{}", PROGRAM_DIR.display());
+//     // println!("{}", COLORSCRIPTS_DIR.display());
+//     // show_pokemon_by_name("eevee", false, false, false, Some("gmax")).unwrap();
+//     show_random_pokemon("7-8", true, false, false);
+//     list_pokemon_names();
+// }
+
 fn main() {
-    // println!("{}", PROGRAM.display());
-    // println!("{}", PROGRAM_DIR.display());
-    // println!("{}", COLORSCRIPTS_DIR.display());
-    // show_pokemon_by_name("eevee", false, false, false, Some("gmax")).unwrap();
-    show_random_pokemon("1-999", true, false, false);
+    let matches = clap::App::new("pokemon-colorscripts")
+        .about("CLI utility to print out unicode image of a pokemon in your shell")
+        .arg(
+            clap::Arg::with_name("list")
+                .short("l")
+                .long("list")
+                .help("Print list of all pokemon"),
+        )
+        .arg(
+            clap::Arg::with_name("name")
+                .short("n")
+                .long("name")
+                .value_name("POKEMON NAME")
+                .help("Select pokemon by name. Generally spelled like in the games."),
+        )
+        .arg(
+            clap::Arg::with_name("form")
+                .short("f")
+                .long("form")
+                .value_name("FORM")
+                .help("Show an alternate form of a pokemon"),
+        )
+        .arg(
+            clap::Arg::with_name("no-title")
+                .long("no-title")
+                .help("Do not display pokemon name"),
+        )
+        .arg(
+            clap::Arg::with_name("shiny")
+                .short("s")
+                .long("shiny")
+                .help("Show the shiny version of the pokemon instead"),
+        )
+        .arg(
+            clap::Arg::with_name("big")
+                .short("b")
+                .long("big")
+                .help("Show a larger version of the sprite"),
+        )
+        .arg(
+            clap::Arg::with_name("random")
+                .short("r")
+                .long("random")
+                .value_name("GENERATION")
+                .help("Show a random pokemon. This flag can optionally be followed by a generation number or range (1-8) to show random pokemon from a specific generation or range of generations. The generations can be provided as a continuous range (eg. 1-3) or as a list of generations (1,3,6)"),
+        )
+        .get_matches();
+
+    if matches.is_present("list") {
+        list_pokemon_names().unwrap();
+    } else if matches.is_present("name") {
+        let name = matches.value_of("name").unwrap();
+        let no_title = matches.is_present("no-title");
+        let shiny = matches.is_present("shiny");
+        let big = matches.is_present("big");
+        let form = matches.value_of("form");
+        show_pokemon_by_name(name, no_title, shiny, big, form).unwrap();
+    } else if matches.is_present("random") {
+        let random = matches.value_of("random").unwrap_or("");
+        let no_title = matches.is_present("no-title");
+        let shiny = matches.is_present("shiny");
+        let big = matches.is_present("big");
+        if matches.is_present("form") {
+            println!("--form flag unexpected with --random");
+            std::process::exit(1);
+        }
+        show_random_pokemon(random, no_title, shiny, big).unwrap();
+    } else {
+        show_random_pokemon("", true, false, false).unwrap();
+    }
 }
