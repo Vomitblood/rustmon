@@ -182,7 +182,7 @@ fn show_random_pokemon(
     Ok(())
 }
 
-// #[cfg(target_os = "windows")]
+#[cfg(target_os = "windows")]
 fn pause() {
     use std::io::{self, Read, Write};
     let mut stdout = io::stdout();
@@ -193,10 +193,10 @@ fn pause() {
     stdin.read(&mut [0]).unwrap();
 }
 
-// #[cfg(not(target_os = "windows"))]
-// fn pause() {
-//     // do literally nothing
-// }
+#[cfg(not(target_os = "windows"))]
+fn pause() {
+    // do literally nothing
+}
 
 fn main() {
     // validate files first
