@@ -31,6 +31,29 @@ const GENERATIONS: [(&str, (u32, u32)); 8] = [
     ("8", (810, 898)),
 ];
 
+fn validate_files() -> std::io::Result<()> {
+    let colorscripts_dir = COLORSCRIPTS_DIR;
+    let pokemon_data_path = POKEMON_DATA_PATH;
+
+    if !colorscripts_dir.exists() {
+        println!(
+            "Colorscripts directory not found at {}",
+            colorscripts_dir.display()
+        );
+        std::process::exit(1);
+    }
+
+    if !pokemon_data_path.exists() {
+        println!(
+            "Pokemon data file not found at {}",
+            pokemon_data_path.display()
+        );
+        std::process::exit(1);
+    }
+
+    Ok(())
+}
+
 fn print_file(filepath: &std::path::Path) -> std::io::Result<()> {
     let file = std::fs::File::open(filepath)?;
     let reader = std::io::BufReader::new(file);
@@ -60,7 +83,10 @@ fn list_pokemon_names() -> std::io::Result<()> {
         }
     }
 
+    println!("-------------------");
     println!("Total: {} Pokémons", count);
+    println!("Use the --name flag to view a specific Pokémon");
+    println!("Tip: Use `grep` to search for a specific Pokémon");
 
     Ok(())
 }
@@ -187,16 +213,10 @@ fn show_random_pokemon(
     Ok(())
 }
 
-// fn main() {
-//     // println!("{}", PROGRAM.display());
-//     // println!("{}", PROGRAM_DIR.display());
-//     // println!("{}", COLORSCRIPTS_DIR.display());
-//     // show_pokemon_by_name("eevee", false, false, false, Some("gmax")).unwrap();
-//     show_random_pokemon("7-8", true, false, false);
-//     list_pokemon_names();
-// }
-
 fn main() {
+    // validate files first
+    validate_files().unwrap();
+
     let matches = clap::App::new("pokemon-colorscripts")
         .about("CLI utility to print out unicode image of a pokemon in your shell")
         .arg(
@@ -253,7 +273,7 @@ fn main() {
         let shiny = matches.is_present("shiny");
         let big = matches.is_present("big");
         let form = matches.value_of("form");
-        show_pokemon_by_name(name, no_title, shiny, big, form).unwrap();
+        show_pokemon_by_name(name, !no_title, shiny, big, form).unwrap();
     } else if matches.is_present("random") {
         let random = matches.value_of("random").unwrap_or("");
         let no_title = matches.is_present("no-title");
@@ -263,8 +283,12 @@ fn main() {
             println!("--form flag unexpected with --random");
             std::process::exit(1);
         }
-        show_random_pokemon(random, no_title, shiny, big).unwrap();
+        show_random_pokemon(random, !no_title, shiny, big).unwrap();
     } else {
-        show_random_pokemon("", true, false, false).unwrap();
+        // show random pokemon by default with support for other flags
+        let no_title = matches.is_present("no-title");
+        let shiny = matches.is_present("shiny");
+        let big = matches.is_present("big");
+        show_random_pokemon("", !no_title, shiny, big).unwrap();
     }
 }
