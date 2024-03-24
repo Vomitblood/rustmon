@@ -1,5 +1,9 @@
 /target
 
 # build/arch-linux
-build/arch-linux/*
-!build/arch-linux/PKGBUILD
+build/arch/*
+!build/arch/PKGBUILD
+
+# build/debian
+build/debian/*
+!build/debian/debian.sh
