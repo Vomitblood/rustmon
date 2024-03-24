@@ -182,6 +182,22 @@ fn show_random_pokemon(
     Ok(())
 }
 
+// #[cfg(target_os = "windows")]
+fn pause() {
+    use std::io::{self, Read, Write};
+    let mut stdout = io::stdout();
+    let mut stdin = io::stdin();
+
+    stdout.write_all(b"Press any key to continue...").unwrap();
+    stdout.flush().unwrap();
+    stdin.read(&mut [0]).unwrap();
+}
+
+// #[cfg(not(target_os = "windows"))]
+// fn pause() {
+//     // do literally nothing
+// }
+
 fn main() {
     // validate files first
     // validate_files().unwrap();
@@ -260,4 +276,7 @@ fn main() {
         let big = matches.is_present("big");
         show_random_pokemon("", !no_title, shiny, big).unwrap();
     }
+
+    // pause the program before exiting only for windows
+    pause();
 }
