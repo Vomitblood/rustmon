@@ -1,1 +1,5 @@
 /target
+
+# build/arch-linux
+build/arch-linux/*
+!build/arch-linux/PKGBUILD
