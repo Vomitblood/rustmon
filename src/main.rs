@@ -27,16 +27,15 @@ const GENERATIONS: [(&str, (u32, u32)); 8] = [
 ];
 
 fn print_file(filepath: &str) -> std::io::Result<()> {
-    if let Some(file) = ColorScriptsDir::get(filepath) {
-        let content = std::str::from_utf8(file.data.as_ref()).unwrap();
-        println!("{}", content);
-        Ok(())
-    } else {
-        Err(std::io::Error::new(
+    ColorScriptsDir::get(filepath)
+        .map(|file| {
+            let content = std::str::from_utf8(file.data.as_ref()).unwrap();
+            println!("{}", content);
+        })
+        .ok_or(std::io::Error::new(
             std::io::ErrorKind::NotFound,
             "File not found",
         ))
-    }
 }
 
 fn list_pokemon_names() -> std::io::Result<()> {
