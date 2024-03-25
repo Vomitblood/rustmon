@@ -32,7 +32,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: pokerust.pkg.tar.zst
-          path: ./*.pkg.tar.zst
+          path: ./**/*.pkg.tar.zst
 
   build:
     runs-on: ubuntu-latest
@@ -43,7 +43,7 @@ jobs:
         run: sudo apt-get install -y dpkg-dev
 
       - name: Build Debian package
-        run: ./build/debian/debian.sh
+        run: sudo ./build/debian/debian.sh
 
       - name: Upload Debian package
         uses: actions/upload-artifact@v2
