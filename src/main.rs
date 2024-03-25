@@ -199,9 +199,6 @@ fn pause() {
 }
 
 fn main() {
-    // validate files first
-    // validate_files().unwrap();
-
     let matches = clap::App::new("pokemon-colorscripts")
         .about("CLI utility to print out unicode image of a pokemon in your shell")
         .arg(
