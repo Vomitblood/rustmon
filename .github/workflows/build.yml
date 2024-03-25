@@ -48,7 +48,7 @@ jobs:
       - name: Build Debian package
         run: |
           cd build/debian
-          sh debian.sh
+          sh debian.sh -y
 
       - name: Upload Debian package
         uses: actions/upload-artifact@v2

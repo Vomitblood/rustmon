@@ -19,7 +19,7 @@ then
         echo "Rust is not installed. Would you like to install it now? (yes/no)"
         read answer
         if [ "$answer" != "${answer#[Yy]}" ] ;then
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+            sudo apt install rustc
             source $HOME/.cargo/env
         else
             echo "Rust is required to continue. Exiting."
