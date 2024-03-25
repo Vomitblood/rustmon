@@ -1,11 +1,14 @@
 #!/bin/sh
 
-# variables
+# get the script location
+SCRIPT_DIR=$(dirname "$0")
+
+# Variables
 PKG_NAME=rustmon
-BUILD_DIR=build/debian
-RELEASE_DIR=../../target/release
-DEBIAN_DIR=$PKG_NAME/DEBIAN
-BIN_DIR=$PKG_NAME/usr/bin
+BUILD_DIR=$SCRIPT_DIR/build/debian
+RELEASE_DIR=$SCRIPT_DIR/../../target/release
+DEBIAN_DIR=$BUILD_DIR/$PKG_NAME/DEBIAN
+BIN_DIR=$BUILD_DIR/$PKG_NAME/usr/bin
 AUTO_INSTALL=${1:-"no"}
 
 # check for rust
