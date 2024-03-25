@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# TODO: check for rust dependency
+
 # create a directory structure that mirrors tha final structure of the installed package
 mkdir -p pokerust/DEBIAN
 mkdir -p pokerust/usr/bin
