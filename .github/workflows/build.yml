@@ -28,6 +28,9 @@ jobs:
           cd build/arch
           sudo -u builder bash -c "makepkg -sf --noconfirm"
 
+      - name: Print current directory
+        run: ls -la
+
       - name: Upload Arch package
         uses: actions/upload-artifact@v2
         with:
@@ -43,7 +46,7 @@ jobs:
         run: sudo apt-get install -y dpkg-dev
 
       - name: Build Debian package
-        run: sudo ./build/debian/debian.sh
+        run: sh build/debian/debian.sh
 
       - name: Upload Debian package
         uses: actions/upload-artifact@v2
