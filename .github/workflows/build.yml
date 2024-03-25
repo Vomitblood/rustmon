@@ -25,6 +25,7 @@ jobs:
       - name: Build Arch package
         run: |
           chown -R builder:builder .
+          cd build/arch
           sudo -u builder bash -c "makepkg -sf --noconfirm"
 
       - name: Upload Arch package
@@ -42,7 +43,7 @@ jobs:
         run: sudo apt-get install -y dpkg-dev
 
       - name: Build Debian package
-        run: ./build/debian.sh
+        run: ./build/debian/debian.sh
 
       - name: Upload Debian package
         uses: actions/upload-artifact@v2
