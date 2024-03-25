@@ -1,4 +1,6 @@
 use rand::prelude::SliceRandom;
+use rand::rngs::SmallRng;
+use rand::SeedableRng;
 use rust_embed::RustEmbed;
 use std::str;
 
@@ -8,7 +10,7 @@ struct ColorScriptsDir;
 
 fn main() {
     let files: Vec<_> = ColorScriptsDir::iter().collect();
-    let mut rng = rand::thread_rng();
+    let mut rng = SmallRng::from_entropy();
 
     if let Some(random_file) = files.choose(&mut rng) {
         println!("{}", random_file);

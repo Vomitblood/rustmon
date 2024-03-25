@@ -1,4 +1,4 @@
-# PokeRust
+# Rustmon
 
 *For educational purposes*  
 A simple colorscript written in Rust.
