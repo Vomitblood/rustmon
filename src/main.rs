@@ -1,7 +1,9 @@
 use rand::Rng;
 
 // set global constants
-const COLORSCRIPTS_DIR: include_dir::Dir = include_dir::include_dir!("./colorscripts");
+#[derive(rust_embed::RustEmbed)]
+#[folder = "colorscripts/"]
+pub struct ColorScriptsDir;
 
 const POKEMON_JSON: &str = std::include_str!("../pokemon.json");
 
@@ -25,8 +27,8 @@ const GENERATIONS: [(&str, (u32, u32)); 8] = [
 ];
 
 fn print_file(filepath: &str) -> std::io::Result<()> {
-    if let Some(file) = COLORSCRIPTS_DIR.get_file(filepath) {
-        let content = std::str::from_utf8(file.contents()).unwrap();
+    if let Some(file) = ColorScriptsDir::get(filepath) {
+        let content = std::str::from_utf8(file.data.as_ref()).unwrap();
         println!("{}", content);
         Ok(())
     } else {
