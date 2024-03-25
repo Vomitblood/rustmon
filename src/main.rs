@@ -3,7 +3,7 @@ use rand::Rng;
 // set global constants
 #[derive(rust_embed::RustEmbed)]
 #[folder = "colorscripts/"]
-pub struct ColorScriptsDir;
+struct ColorScriptsDir;
 
 const POKEMON_JSON: &str = std::include_str!("../pokemon.json");
 
