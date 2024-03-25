@@ -46,10 +46,12 @@ jobs:
         run: sudo apt-get install -y dpkg-dev
 
       - name: Build Debian package
-        run: sh build/debian/debian.sh
+        run: |
+          cd build/debian
+          sh debian.sh
 
       - name: Upload Debian package
         uses: actions/upload-artifact@v2
         with:
           name: pokerust.deb
-          path: ./build/debian/pokerust.deb
+          path: pokerust.deb
