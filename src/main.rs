@@ -27,7 +27,7 @@ const GENERATIONS: [(&str, (u32, u32)); 8] = [
 ];
 
 fn print_file(filepath: &str) -> std::io::Result<()> {
-    ColorScriptsDir::get(filepath)
+    return ColorScriptsDir::get(filepath)
         .map(|file| {
             let content = std::str::from_utf8(file.data.as_ref()).unwrap();
             println!("{}", content);
@@ -35,7 +35,7 @@ fn print_file(filepath: &str) -> std::io::Result<()> {
         .ok_or(std::io::Error::new(
             std::io::ErrorKind::NotFound,
             "File not found",
-        ))
+        ));
 }
 
 fn list_pokemon_names() -> std::io::Result<()> {
@@ -59,7 +59,7 @@ fn list_pokemon_names() -> std::io::Result<()> {
     println!("Use the --name flag to view a specific Pokémon");
     println!("Tip: Use `grep` to search for a specific Pokémon");
 
-    Ok(())
+    return Ok(());
 }
 
 fn show_pokemon_by_name(
@@ -132,7 +132,7 @@ fn show_pokemon_by_name(
     // Use the adjusted function to print file contents from embedded resources
     print_file(&file_path)?;
 
-    Ok(())
+    return Ok(());
 }
 
 fn show_random_pokemon(
@@ -180,7 +180,7 @@ fn show_random_pokemon(
         std::process::exit(1);
     }
 
-    Ok(())
+    return Ok(());
 }
 
 #[cfg(target_os = "windows")]
@@ -246,6 +246,7 @@ fn main() {
                 .value_name("GENERATION")
                 .help("Show a random pokemon. This flag can optionally be followed by a generation number or range (1-8) to show random pokemon from a specific generation or range of generations. The generations can be provided as a continuous range (eg. 1-3) or as a list of generations (1,3,6)"),
         )
+        .after_help("P.S. Use the minimon command for a minimalistic version of this tool")
         .get_matches();
 
     if matches.is_present("list") {
