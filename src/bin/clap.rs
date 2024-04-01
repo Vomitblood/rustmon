@@ -9,7 +9,7 @@ struct Args {
     name: String,
 
     // big
-    /// Show a larger version of the sprite
+    /// Show a bigger version of the sprite
     #[arg(short, long, default_value_t = false)]
     big: bool,
 
