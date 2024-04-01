@@ -38,8 +38,8 @@ fn print_file(filepath: &str) -> std::io::Result<()> {
         ));
 }
 
-fn list_pokemon_names() -> std::io::Result<()> {
-    let pokemon_json: serde_json::Value = serde_json::from_str(POKEMON_JSON)?;
+fn list_pokemon_names() {
+    let pokemon_json: serde_json::Value = serde_json::from_str(POKEMON_JSON).unwrap();
 
     let mut count = 0;
 
@@ -58,8 +58,6 @@ fn list_pokemon_names() -> std::io::Result<()> {
     println!("Total: {} Pokémons", count);
     println!("Use the --name flag to view a specific Pokémon");
     println!("Tip: Use `grep` to search for a specific Pokémon");
-
-    return Ok(());
 }
 
 fn show_pokemon_by_name(
@@ -200,7 +198,7 @@ fn pause() {
 }
 
 fn main() {
-    let matches = clap::App::new("pokemon-colorscripts")
+    let matches = clap::App::new("rustmon")
         .about("CLI utility to print out unicode image of a pokemon in your shell")
         .arg(
             clap::Arg::with_name("list")
@@ -250,7 +248,7 @@ fn main() {
         .get_matches();
 
     if matches.is_present("list") {
-        list_pokemon_names().unwrap();
+        list_pokemon_names();
     } else if matches.is_present("name") {
         let name = matches.value_of("name").unwrap();
         let no_title = matches.is_present("no-title");
