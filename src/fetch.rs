@@ -1,17 +1,22 @@
 use image::GenericImageView;
 use std::io::Write;
 
-pub fn fetch(extract_destination: &std::path::Path, silent: bool) {
+pub fn fetch(extract_destination: &std::path::Path, verbose: bool) {
     // prep working directory
     match create_working_directory() {
         Ok(_) => (),
-        Err(e) => eprintln!("Error creating working directory: {}", e),
+        Err(e) => {
+            eprintln!("Error creating working directory: {}", e);
+        }
     };
 
     // download colorscripts archive
-    match download_colorscripts_archive(crate::constants::TARGET_URL) {
+    match fetch_colorscripts_archive(crate::constants::TARGET_URL) {
         Ok(_) => (),
-        Err(e) => eprintln!("Error downloading colorscripts archive: {}", e),
+        Err(e) => {
+            eprintln!("Error fetching colorscripts archive: {}", e);
+            std::process::exit(1);
+        }
     };
 
     // extract colorscripts archive
@@ -28,7 +33,7 @@ pub fn fetch(extract_destination: &std::path::Path, silent: bool) {
     };
 
     // convert images to unicode, both small and big
-    match convert_images_to_ascii(extract_destination, silent) {
+    match convert_images_to_ascii(extract_destination, verbose) {
         Ok(_) => (),
         Err(e) => eprintln!("Error converting images to ASCII: {}", e),
     };
@@ -42,24 +47,25 @@ pub fn fetch(extract_destination: &std::path::Path, silent: bool) {
 
 fn create_working_directory() -> std::io::Result<()> {
     println!(
-        "Creating working directory at {}...",
-        &crate::constants::WORKING_DIRECTORY
+        "Creating working directory at {:?}...",
+        &*crate::constants::CACHE_DIRECTORY
     );
     // create intermediate directories also
-    std::fs::create_dir(&crate::constants::WORKING_DIRECTORY)?;
+    std::fs::create_dir(&*crate::constants::CACHE_DIRECTORY)?;
     println!("Created working directory");
     return Ok(());
 }
 
-fn download_colorscripts_archive(target_url: &str) -> Result<(), Box<dyn std::error::Error>> {
+fn fetch_colorscripts_archive(target_url: &str) -> Result<(), Box<dyn std::error::Error>> {
     println!("Fetching colorscripts archive...");
 
     let response = reqwest::blocking::get(target_url)?;
 
-    let mut dest = std::fs::File::create(format!(
-        "{}pokesprite.zip",
-        &crate::constants::WORKING_DIRECTORY
-    ))?;
+    let mut dest = std::fs::File::create(
+        &*crate::constants::CACHE_DIRECTORY
+            .to_path_buf()
+            .join("pokesprite.zip"),
+    )?;
 
     let response_body = response.error_for_status()?.bytes()?;
     std::io::copy(&mut response_body.as_ref(), &mut dest)?;
@@ -72,9 +78,11 @@ fn download_colorscripts_archive(target_url: &str) -> Result<(), Box<dyn std::er
 fn extract_colorscripts_archive() -> zip::result::ZipResult<()> {
     println!("Extracting colorscripts archive...");
 
-    let archive_file = std::fs::File::open(std::path::Path::new(
-        format!("{}pokesprite.zip", &crate::constants::WORKING_DIRECTORY).as_str(),
-    ))?;
+    let archive_file = std::fs::File::open(
+        &*crate::constants::CACHE_DIRECTORY
+            .to_path_buf()
+            .join("pokesprite.zip"),
+    )?;
     let mut archive = zip::read::ZipArchive::new(std::io::BufReader::new(archive_file))?;
 
     // iterate over every single file in the archive
@@ -103,7 +111,7 @@ fn extract_colorscripts_archive() -> zip::result::ZipResult<()> {
                 .and_then(std::ffi::OsStr::to_str)
                 .unwrap();
 
-            let outpath = std::path::Path::new(&crate::constants::WORKING_DIRECTORY)
+            let outpath = &*crate::constants::CACHE_DIRECTORY
                 .join("raw_images")
                 .join(parent_dir)
                 .join(file_name);
@@ -130,15 +138,19 @@ fn crop_all_images_in_directory() -> std::io::Result<()> {
 
     // make sure the cropped_images directory exists
     std::fs::create_dir_all(
-        std::path::Path::new(crate::constants::WORKING_DIRECTORY).join("cropped_images"),
+        &*crate::constants::CACHE_DIRECTORY
+            .to_path_buf()
+            .join("cropped_images"),
     )?;
 
     // do for both regular and shiny subdirectories
     for subdirectory in ["regular", "shiny"].iter() {
-        let input_subdirectory_path = std::path::Path::new(crate::constants::WORKING_DIRECTORY)
+        let input_subdirectory_path = &*crate::constants::CACHE_DIRECTORY
+            .to_path_buf()
             .join("raw_images")
             .join(subdirectory);
-        let output_subdirectory_path = std::path::Path::new(crate::constants::WORKING_DIRECTORY)
+        let output_subdirectory_path = &*crate::constants::CACHE_DIRECTORY
+            .to_path_buf()
             .join("cropped_images")
             .join(subdirectory);
 
@@ -215,7 +227,7 @@ fn crop_to_content(
 
 fn convert_images_to_ascii(
     output_directory_path: &std::path::Path,
-    silent: bool,
+    verbose: bool,
 ) -> std::io::Result<()> {
     println!("Extract destination: {:?}", output_directory_path);
     println!("Converting images to ASCII...");
@@ -224,10 +236,9 @@ fn convert_images_to_ascii(
 
     for size in ["small", "big"].iter() {
         for subdirectory in ["regular", "shiny"].iter() {
-            let input_subdirectory_path =
-                std::path::PathBuf::from(crate::constants::WORKING_DIRECTORY)
-                    .join("cropped_images")
-                    .join(subdirectory);
+            let input_subdirectory_path = &*crate::constants::CACHE_DIRECTORY
+                .join("cropped_images")
+                .join(subdirectory);
             let output_subdirectory_path = output_directory_path
                 .join("colorscripts")
                 .join(size)
@@ -248,7 +259,7 @@ fn convert_images_to_ascii(
                     };
 
                     // print for fun
-                    if silent == false {
+                    if verbose == true {
                         println!("{}", ascii_art);
                     };
 
@@ -341,7 +352,7 @@ fn get_color_escape_code(pixel: image::Rgba<u8>, background: bool) -> String {
 fn cleanup() -> std::io::Result<()> {
     println!("Cleaning up...");
 
-    std::fs::remove_dir_all(std::path::Path::new(crate::constants::WORKING_DIRECTORY))?;
+    std::fs::remove_dir_all(&*crate::constants::CACHE_DIRECTORY)?;
 
     println!("Cleaned up");
 

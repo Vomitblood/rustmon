@@ -5,8 +5,8 @@ use clap::Parser;
 
 ## Fetch
 - `fetch` - Fetch the latest colorscripts from the repository
-- `silent` - Don't print colorscripts to the console when generating
 - `extract_destination` - eXtract the colorscripts archive to a specified location
+- `verbose` - Print more information
 
 ## Print
 - `name` - Select pokemon by name
@@ -25,15 +25,15 @@ struct Args {
     #[arg(short, long, default_value_t = false)]
     fetch: bool,
 
-    // silent
-    /// Don't print colorscripts to the console when generating
-    #[arg(long = "silent", default_value_t = false)]
-    silent: bool,
-
     // extract destination
     /// eXtract the colorscripts archive to a specified location
     #[arg(short = 'x', long = "extract", default_value_t = String::from(""))]
     extract_destination: String,
+
+    // verbose
+    /// Don't print colorscripts to the console when generating
+    #[arg(long = "verbose", default_value_t = false)]
+    verbose: bool,
     /*
     // big
     /// Show a bigger version of the sprite
@@ -86,7 +86,7 @@ fn main() {
             std::path::PathBuf::from(&args.extract_destination)
         };
 
-        rustmon::fetch::fetch(&extract_destination, args.silent);
+        rustmon::fetch::fetch(&extract_destination, args.verbose);
     } else {
         println!("print deez nuts");
     }

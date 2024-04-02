@@ -1631,6 +1631,7 @@ dependencies = [
  "ctrlc",
  "dirs",
  "image",
+ "once_cell",
  "rand",
  "reqwest",
  "rust-embed",

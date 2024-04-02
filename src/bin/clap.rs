@@ -1,41 +1,60 @@
-use clap::Parser;
+use std::path::PathBuf;
 
-/// Simple program to greet a person
-#[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
-struct Args {
-    /// Name of the person to greet
-    #[arg(short = 'a', long, default_value_t = String::from(""))]
-    name: String,
-
-    // big
-    /// Show a bigger version of the sprite
-    #[arg(short, long, default_value_t = false)]
-    big: bool,
-
-    // list
-    /// Show a list of all pokemon names
-    #[arg(short, long, default_value_t = false)]
-    list: bool,
-
-    // no-title
-    // NOTE: clap will convert the kebab-case to snake_case
-    // very smart!
-    // ...but very annoying for beginners
-    /// Do not display pokemon name
-    #[arg(long, default_value_t = false)]
-    no_title: bool,
-
-    // shiny
-    /// Show the shiny version of the sprite
-    #[arg(short, long, default_value_t = false)]
-    shiny: bool,
-}
+use clap::{arg, value_parser, ArgAction, Command};
 
 fn main() {
-    let args = Args::parse();
+    let matches = clap::command!() // requires `cargo` feature
+        .arg(arg!([name] "Optional name to operate on"))
+        .arg(
+            arg!(
+                -c --config <FILE> "Sets a custom config file"
+            )
+            // We don't have syntax yet for optional options, so manually calling `required`
+            .required(false)
+            .value_parser(value_parser!(PathBuf)),
+        )
+        .arg(arg!(
+            -d --debug ... "Turn debugging information on"
+        ))
+        .subcommand(
+            Command::new("test")
+                .about("does testing things")
+                .arg(arg!(-l --list "lists test values").action(ArgAction::SetTrue)),
+        )
+        .get_matches();
 
-    println!("no-title: {}", args.no_title);
+    // You can check the value provided by positional arguments, or option arguments
+    if let Some(name) = matches.get_one::<String>("name") {
+        println!("Value for name: {name}");
+    }
 
-    println!("name: {}", args.name);
+    if let Some(config_path) = matches.get_one::<PathBuf>("config") {
+        println!("Value for config: {}", config_path.display());
+    }
+
+    // You can see how many times a particular flag or argument occurred
+    // Note, only flags can have multiple occurrences
+    match matches
+        .get_one::<u8>("debug")
+        .expect("Count's are defaulted")
+    {
+        0 => println!("Debug mode is off"),
+        1 => println!("Debug mode is kind of on"),
+        2 => println!("Debug mode is on"),
+        _ => println!("Don't be crazy"),
+    }
+
+    // You can check for the existence of subcommands, and if found use their
+    // matches just as you would the top level cmd
+    if let Some(matches) = matches.subcommand_matches("test") {
+        // "$ myapp test" was run
+        if matches.get_flag("list") {
+            // "$ myapp test -l" was run
+            println!("Printing testing lists...");
+        } else {
+            println!("Not printing testing lists...");
+        }
+    }
+
+    // Continued program logic goes here...
 }
