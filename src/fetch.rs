@@ -299,7 +299,8 @@ fn convert_image_to_unicode_small(img: &image::DynamicImage) -> String {
             let lower_pixel = if y + 1 < height {
                 img.get_pixel(x, y + 1)
             } else {
-                upper_pixel // Fallback to upper pixel if there's no lower pixel.
+                // fallback to upper pixel if there's no lower pixel.
+                upper_pixel
             };
 
             if upper_pixel[3] == 0 && lower_pixel[3] == 0 {
