@@ -15,6 +15,7 @@ pub fn fetch(extract_destination: &std::path::Path, verbose: bool) {
         Ok(_) => (),
         Err(e) => {
             eprintln!("Error fetching colorscripts archive: {}", e);
+            cleanup().unwrap();
             std::process::exit(1);
         }
     };
@@ -23,19 +24,31 @@ pub fn fetch(extract_destination: &std::path::Path, verbose: bool) {
     // now we have the raw images
     match extract_colorscripts_archive() {
         Ok(_) => (),
-        Err(e) => eprintln!("Error extracting colorscripts archive: {}", e),
+        Err(e) => {
+            eprintln!("Error extracting colorscripts archive: {}", e);
+            cleanup().unwrap();
+            std::process::exit(1);
+        }
     };
 
     // crop images to content
     match crop_all_images_in_directory() {
         Ok(_) => (),
-        Err(e) => eprintln!("Error cropping images: {}", e),
+        Err(e) => {
+            eprintln!("Error cropping images: {}", e);
+            cleanup().unwrap();
+            std::process::exit(1);
+        }
     };
 
     // convert images to unicode, both small and big
     match convert_images_to_ascii(extract_destination, verbose) {
         Ok(_) => (),
-        Err(e) => eprintln!("Error converting images to ASCII: {}", e),
+        Err(e) => {
+            eprintln!("Error converting images to ASCII: {}", e);
+            cleanup().unwrap();
+            std::process::exit(1);
+        }
     };
 
     // cleanup

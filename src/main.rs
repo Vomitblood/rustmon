@@ -1,99 +1,119 @@
-use clap::Parser;
-
 /*
 # Arguments
+## `fetch` - Fetch the latest colorscripts from the repository
+- `extract_destination` - eXtract the colorscripts archive to a custom location
+- `verbose` - Print colorscripts when generating
 
-## Fetch
-- `fetch` - Fetch the latest colorscripts from the repository
-- `extract_destination` - eXtract the colorscripts archive to a specified location
-- `verbose` - Print more information
-
-## Print
-- `name` - Select pokemon by name
-- `big` - Show a bigger version of the sprite
-- `list` - Show a list of all pokemon names
-- `no-title` - Do not display pokemon name
-- `shiny` - Show the shiny version of the sprite
+## `print` - Print a Pokemon colorscript
+- `name` - Select Pokemon by name
+- `big` - Print a bigger version of the colorscript
+- `list` - Print a list of all Pokemon names
+- `random` - Print a random Pokemon colorscript
+- `no-title` - Do not print Pokemon name
+- `shiny` - Print the shiny version of the colorscript
 */
 
 /// Pokemon Colorscripts written in Rust
-#[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
-struct Args {
-    // fetch
-    /// Fetch the latest colorscripts from the repository
-    #[arg(short, long, default_value_t = false)]
-    fetch: bool,
-
-    // extract destination
-    /// eXtract the colorscripts archive to a specified location
-    #[arg(short = 'x', long = "extract", default_value_t = String::from(""))]
-    extract_destination: String,
-
-    // verbose
-    /// Don't print colorscripts to the console when generating
-    #[arg(long = "verbose", default_value_t = false)]
-    verbose: bool,
-    /*
-    // big
-    /// Show a bigger version of the sprite
-    #[arg(short, long, default_value_t = false)]
-    big: bool,
-
-    // list
-    /// Show a list of all pokemon names
-    #[arg(short, long, default_value_t = false)]
-    list: bool,
-
-    // name
-    /// Select pokemon by name
-    #[arg(short = 'a', long, default_value_t = String::from(""))]
-    name: String,
-
-    // no-title
-    // NOTE: clap will convert the kebab-case to snake_case
-    // very smart!
-    // ...but very annoying for beginners
-    /// Do not display pokemon name
-    #[arg(long, default_value_t = false)]
-    no_title: bool,
-
-    // shiny
-    /// Show the shiny version of the sprite
-    #[arg(short, long, default_value_t = false)]
-    shiny: bool,
-    */
-}
-
 fn main() {
-    let args = argument_validation();
+    let args = argument_parser();
 
-    if args.fetch == true {
-        // get data directory
-        let data_directory = match dirs::data_dir() {
-            Some(dir) => dir.join("rustmon"),
-            None => {
-                println!("Data directory not found");
-                std::process::exit(1);
-            }
-        };
+    if let Some(fetch_args) = args.subcommand_matches("fetch") {
+        // fetch
+        let extract_destination_raw: &String =
+            fetch_args.get_one::<String>("extract_destination").unwrap();
+        let extract_destination: &std::path::Path = std::path::Path::new(extract_destination_raw);
+        let verbose: bool = fetch_args.get_flag("verbose");
 
-        // decicde whether to use the default data directory or the one specified by the user
-        // if the user specifies a directory, use that
-        let extract_destination = if args.extract_destination.is_empty() {
-            data_directory
-        } else {
-            std::path::PathBuf::from(&args.extract_destination)
-        };
+        // display selections
+        println!("Extract destination: {}", extract_destination.display());
+        println!("Verbose: {}", verbose);
 
-        rustmon::fetch::fetch(&extract_destination, args.verbose);
-    } else {
-        println!("print deez nuts");
+        // invoke bigchungus fetch function
+        rustmon::fetch::fetch(extract_destination, verbose)
+    } else if let Some(print_args) = args.subcommand_matches("print") {
+        // print
+        if let Some(name) = print_args.get_one::<String>("name") {
+            // print/name
+            println!("name: {}", name);
+        }
+        if print_args.get_flag("big") {
+            // print/big
+            println!("big");
+        }
+        println!("something else");
     }
 }
 
-fn argument_validation() -> Args {
-    let args = Args::parse();
-
-    return args;
+fn argument_parser() -> clap::ArgMatches {
+    return clap::command!()
+        // info
+        .about("Pokemon Colorscripts written in Rust")
+        .author("Vomitblood")
+        // fetch subcommand
+        .subcommand(
+            clap::Command::new("fetch")
+                .about("Fetch the latest colorscripts from the repository")
+                // fetch/extract_destination
+                .arg(
+                    clap::Arg::new("extract_destination")
+                        .help("eXtract the colorscripts archive to a custom location")
+                        .short('x')
+                        .long("extract-destination")
+                        .default_value(&*rustmon::constants::DATA_DIRECTORY.to_str().unwrap()),
+                )
+                // fetch/verbose
+                .arg(
+                    clap::Arg::new("verbose")
+                        .help("Select Pokemon by name")
+                        .short('v')
+                        .long("verbose")
+                        .action(clap::ArgAction::SetTrue),
+                ),
+        )
+        // print subcommand
+        .subcommand(
+            clap::Command::new("print")
+                .about("Print a Pokemon colorscript")
+                // print/big
+                .arg(
+                    clap::arg!(-b --big "Print a bigger version of the colorscript")
+                        .conflicts_with("list"),
+                )
+                // print/list
+                .arg(
+                    clap::arg!(-l --list "Print a list of all Pokemon names")
+                        .conflicts_with("name")
+                        .conflicts_with("random"),
+                )
+                // print/name
+                .arg(
+                    clap::Arg::new("name")
+                        .help("Select Pokemon by name")
+                        .short('n')
+                        .long("name")
+                        .conflicts_with("list")
+                        .conflicts_with("random"),
+                )
+                // print/random
+                .arg(
+                    clap::arg!(-r --random "Print a random Pokemon colorscript")
+                        .conflicts_with("list")
+                        .conflicts_with("name"),
+                )
+                // print/no-title
+                .arg(
+                    clap::Arg::new("no-title")
+                        .help("Do not print Pokemon name")
+                        .long("no-title")
+                        .action(clap::ArgAction::SetTrue)
+                        .conflicts_with("list"),
+                )
+                // print/shiny
+                .arg(
+                    clap::arg!(-s --shiny "Print the shiny version of the colorscript")
+                        .conflicts_with("list"),
+                ),
+        )
+        // finalize
+        .get_matches();
 }
