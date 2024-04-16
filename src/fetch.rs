@@ -10,6 +10,16 @@ pub fn fetch(extract_destination: &std::path::Path, verbose: bool) {
         }
     };
 
+    // prep output directory
+    match create_output_directory(extract_destination) {
+        Ok(_) => (),
+        Err(e) => {
+            eprintln!("Error creating output directory: {}", e);
+            cleanup().unwrap();
+            std::process::exit(1);
+        }
+    };
+
     // download pokemon.json
     match fetch_pokemon_json() {
         Ok(_) => (),
@@ -21,7 +31,7 @@ pub fn fetch(extract_destination: &std::path::Path, verbose: bool) {
     }
 
     // process pokemon_raw.json
-    match process_pokemon_json() {
+    match process_pokemon_json(extract_destination) {
         Ok(_) => (),
         Err(e) => {
             eprintln!("Error processing pokemon_raw.json: {}", e);
@@ -90,25 +100,63 @@ fn create_working_directory() -> std::io::Result<()> {
     return Ok(());
 }
 
+fn create_output_directory(output_directory_path: &std::path::Path) -> std::io::Result<()> {
+    println!(
+        "Creating output directory at {:?}...",
+        output_directory_path
+    );
+    std::fs::create_dir_all(output_directory_path)?;
+    println!("Created output directory");
+    return Ok(());
+}
+
 fn fetch_pokemon_json() -> Result<(), Box<dyn std::error::Error>> {
     println!("Fetching pokemon_raw.json...");
 
-    let response = reqwest::blocking::get(
-        "https://raw.githubusercontent.com/Vomitblood/pokesprite/master/data/pokemon.json",
-    )?;
+    // create a client with a timeout of 4 seconds
+    let client = reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_millis(4000))
+        .build()?;
 
-    let mut dest = std::fs::File::create(
-        &*crate::constants::CACHE_DIRECTORY
-            .to_path_buf()
-            .join("pokemon_raw.json"),
-    )?;
+    let mut attempts: u8 = 0;
+    const MAX_ATTEMPTS: u8 = 5;
 
-    let response_body = response.error_for_status()?.bytes()?;
-    std::io::copy(&mut response_body.as_ref(), &mut dest)?;
+    loop {
+        match client
+            .get("https://raw.githubusercontent.com/Vomitblood/pokesprite/master/data/pokemon.json")
+            .send()
+        {
+            Ok(response) => {
+                if response.status().is_success() {
+                    let mut dest = std::fs::File::create(
+                        &*crate::constants::CACHE_DIRECTORY
+                            .to_path_buf()
+                            .join("pokemon_raw.json"),
+                    )?;
 
-    println!("Downloaded pokemon_raw.json");
+                    let response_body = response.bytes()?;
+                    std::io::copy(&mut response_body.as_ref(), &mut dest)?;
 
-    return Ok(());
+                    println!("Downloaded pokemon_raw.json");
+
+                    return Ok(());
+                } else {
+                    // handle unsuccessful response status codes
+                    eprintln!("Error fetching pokemon_raw.json: {}", response.status());
+                }
+            }
+            Err(e) => {
+                attempts += 1;
+                eprintln!("Attempt {} failed: {}", attempts, e);
+                if attempts >= MAX_ATTEMPTS {
+                    return Err(e.into());
+                }
+
+                // delay before retrying
+                std::thread::sleep(std::time::Duration::from_secs(1));
+            }
+        }
+    }
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
@@ -147,7 +195,9 @@ struct ProcessedPokemon {
     forms: Vec<String>,
 }
 
-fn process_pokemon_json() -> Result<(), Box<dyn std::error::Error>> {
+fn process_pokemon_json(
+    output_directory_path: &std::path::Path,
+) -> Result<(), Box<dyn std::error::Error>> {
     println!("Generating pokemon.json...");
 
     let pokemon_raw_json_path = &*crate::constants::CACHE_DIRECTORY.join("pokemon_raw.json");
@@ -161,7 +211,7 @@ fn process_pokemon_json() -> Result<(), Box<dyn std::error::Error>> {
 
     // write processed data to file
     std::fs::write(
-        crate::constants::CACHE_DIRECTORY.join("processed_pokemon.json"),
+        output_directory_path.join("pokemon.json"),
         serialized_pokemon,
     )?;
 
@@ -225,20 +275,47 @@ fn transform_pokemon_data(
 fn fetch_colorscripts_archive(target_url: &str) -> Result<(), Box<dyn std::error::Error>> {
     println!("Fetching colorscripts archive...");
 
-    let response = reqwest::blocking::get(target_url)?;
+    // create a client with a timeout of 4 seconds
+    let client = reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_millis(4000))
+        .build()?;
 
-    let mut dest = std::fs::File::create(
-        &*crate::constants::CACHE_DIRECTORY
-            .to_path_buf()
-            .join("pokesprite.zip"),
-    )?;
+    let mut attempts: u8 = 0;
+    const MAX_ATTEMPTS: u8 = 5;
 
-    let response_body = response.error_for_status()?.bytes()?;
-    std::io::copy(&mut response_body.as_ref(), &mut dest)?;
+    loop {
+        match client.get(target_url).send() {
+            Ok(response) => {
+                if response.status().is_success() {
+                    let mut dest = std::fs::File::create(
+                        &*crate::constants::CACHE_DIRECTORY
+                            .to_path_buf()
+                            .join("pokesprite.zip"),
+                    )?;
 
-    println!("Downloaded colorscripts archive");
+                    let response_body = response.bytes()?;
+                    std::io::copy(&mut response_body.as_ref(), &mut dest)?;
 
-    return Ok(());
+                    println!("Downloaded colorscripts archive");
+
+                    return Ok(());
+                } else {
+                    // handle unsuccessful response status codes
+                    eprintln!("Error fetching colorscripts archive: {}", response.status());
+                }
+            }
+            Err(e) => {
+                attempts += 1;
+                eprintln!("Attempt {} failed: {}", attempts, e);
+                if attempts >= MAX_ATTEMPTS {
+                    return Err(e.into());
+                }
+
+                // delay before retrying
+                std::thread::sleep(std::time::Duration::from_secs(1));
+            }
+        }
+    }
 }
 
 fn extract_colorscripts_archive() -> zip::result::ZipResult<()> {
@@ -397,8 +474,6 @@ fn convert_images_to_ascii(
 ) -> std::io::Result<()> {
     println!("Extract destination: {:?}", output_directory_path);
     println!("Converting images to ASCII...");
-
-    std::fs::create_dir_all(output_directory_path)?;
 
     for size in ["small", "big"].iter() {
         for subdirectory in ["regular", "shiny"].iter() {
