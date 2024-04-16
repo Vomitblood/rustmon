@@ -234,12 +234,12 @@ fn read_pokemon_file(
 }
 
 fn transform_pokemon_data(
-    pokemons: &std::collections::HashMap<String, Pokemon>,
+    pokemon_collection: &std::collections::HashMap<String, Pokemon>,
 ) -> Vec<ProcessedPokemon> {
-    let mut processed_pokemons: Vec<ProcessedPokemon> = pokemons
+    let mut processed_pokemons: Vec<ProcessedPokemon> = pokemon_collection
         .iter()
         .map(|(_key, p)| {
-            let forms = p
+            let mut forms = p
                 .gen_8
                 .forms
                 .keys()
@@ -248,6 +248,14 @@ fn transform_pokemon_data(
                     _ => key.clone(),
                 })
                 .collect::<Vec<String>>();
+
+            // ensure `regular` is first then sort remaining forms alphabetically
+            // ocd af
+            forms.sort();
+            if let Some(pos) = forms.iter().position(|x| x == "regular") {
+                forms.remove(pos);
+                forms.insert(0, "regular".to_string());
+            }
 
             ProcessedPokemon {
                 // remove leading zeros from the pokedex number
