@@ -10,6 +10,26 @@ pub fn fetch(extract_destination: &std::path::Path, verbose: bool) {
         }
     };
 
+    // download pokemon.json
+    match fetch_pokemon_json() {
+        Ok(_) => (),
+        Err(e) => {
+            eprintln!("Error fetching pokemon_raw.json: {}", e);
+            cleanup().unwrap();
+            std::process::exit(1);
+        }
+    }
+
+    // process pokemon_raw.json
+    match process_pokemon_json() {
+        Ok(_) => (),
+        Err(e) => {
+            eprintln!("Error processing pokemon_raw.json: {}", e);
+            cleanup().unwrap();
+            std::process::exit(1);
+        }
+    };
+
     // download colorscripts archive
     match fetch_colorscripts_archive(crate::constants::TARGET_URL) {
         Ok(_) => (),
@@ -52,10 +72,11 @@ pub fn fetch(extract_destination: &std::path::Path, verbose: bool) {
     };
 
     // cleanup
-    match cleanup() {
-        Ok(_) => (),
-        Err(e) => eprintln!("Error cleaning up: {}", e),
-    };
+    // TODO: uncomment
+    // match cleanup() {
+    //     Ok(_) => (),
+    //     Err(e) => eprintln!("Error cleaning up: {}", e),
+    // };
 }
 
 fn create_working_directory() -> std::io::Result<()> {
@@ -67,6 +88,138 @@ fn create_working_directory() -> std::io::Result<()> {
     std::fs::create_dir(&*crate::constants::CACHE_DIRECTORY)?;
     println!("Created working directory");
     return Ok(());
+}
+
+fn fetch_pokemon_json() -> Result<(), Box<dyn std::error::Error>> {
+    println!("Fetching pokemon_raw.json...");
+
+    let response = reqwest::blocking::get(
+        "https://raw.githubusercontent.com/Vomitblood/pokesprite/master/data/pokemon.json",
+    )?;
+
+    let mut dest = std::fs::File::create(
+        &*crate::constants::CACHE_DIRECTORY
+            .to_path_buf()
+            .join("pokemon_raw.json"),
+    )?;
+
+    let response_body = response.error_for_status()?.bytes()?;
+    std::io::copy(&mut response_body.as_ref(), &mut dest)?;
+
+    println!("Downloaded pokemon_raw.json");
+
+    return Ok(());
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
+struct Slug {
+    eng: String,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
+struct Forms {
+    // ignoring actual details in the forms and just capturing form names
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
+struct Generation {
+    forms: std::collections::HashMap<String, Forms>,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
+struct Pokemon {
+    idx: String,
+    slug: Slug,
+    #[serde(rename = "gen-8")]
+    gen_8: Generation,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Debug)]
+struct PokemonCollection {
+    #[serde(flatten)]
+    entries: std::collections::HashMap<String, Pokemon>,
+}
+
+#[derive(serde::Serialize, Debug)]
+struct ProcessedPokemon {
+    pokedex: String,
+    name: String,
+    forms: Vec<String>,
+}
+
+fn process_pokemon_json() -> Result<(), Box<dyn std::error::Error>> {
+    println!("Generating pokemon.json...");
+
+    let pokemon_raw_json_path = &*crate::constants::CACHE_DIRECTORY.join("pokemon_raw.json");
+
+    let pokemon_collection = read_pokemon_file(pokemon_raw_json_path)?;
+
+    let processed_pokemon = transform_pokemon_data(&pokemon_collection.entries);
+
+    // serialize the processed data to JSON
+    let serialized_pokemon = serde_json::to_string_pretty(&processed_pokemon)?;
+
+    // write processed data to file
+    std::fs::write(
+        crate::constants::CACHE_DIRECTORY.join("processed_pokemon.json"),
+        serialized_pokemon,
+    )?;
+
+    println!("Generated pokemon.json");
+
+    Ok(())
+}
+
+fn read_pokemon_file(
+    file_path: &std::path::Path,
+) -> Result<PokemonCollection, Box<dyn std::error::Error>> {
+    // open the file in read only mode
+    let file = std::fs::File::open(file_path)?;
+    let reader = std::io::BufReader::new(file);
+
+    // deserialize the into pokemoncollection
+    let collection = serde_json::from_reader(reader)?;
+
+    return Ok(collection);
+}
+
+fn transform_pokemon_data(
+    pokemons: &std::collections::HashMap<String, Pokemon>,
+) -> Vec<ProcessedPokemon> {
+    let mut processed_pokemons: Vec<ProcessedPokemon> = pokemons
+        .iter()
+        .map(|(_key, p)| {
+            let forms = p
+                .gen_8
+                .forms
+                .keys()
+                .map(|key| match key.as_str() {
+                    "$" => "regular".to_string(),
+                    _ => key.clone(),
+                })
+                .collect::<Vec<String>>();
+
+            ProcessedPokemon {
+                // remove leading zeros from the pokedex number
+                pokedex: p.idx.trim_start_matches('0').to_string(),
+                // use the slug as the name
+                // this is because i am too lazy to decapitalize the name
+                // also in case of name =/= slug
+                name: p.slug.eng.clone(),
+                forms,
+            }
+        })
+        .collect();
+
+    // sort the vector by pokedex number
+    processed_pokemons.sort_by(|a, b| {
+        a.pokedex
+            .parse::<u32>()
+            .unwrap_or(0)
+            .cmp(&b.pokedex.parse::<u32>().unwrap_or(0))
+    });
+
+    return processed_pokemons;
 }
 
 fn fetch_colorscripts_archive(target_url: &str) -> Result<(), Box<dyn std::error::Error>> {

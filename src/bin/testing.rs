@@ -1,27 +1,31 @@
-use std::fs;
-
 fn main() {
-    let contents = fs::read_to_string("testing/testing.fuck").unwrap();
-    let mut found: bool = false;
-
-    for line in contents.lines() {
-        match line {
-            "1" | "2" => {
-                found = true;
-                break;
-            }
-
-            // if not found
-            _ => found = false,
-        }
-    }
-
-    if found == true {
-        println!("Gotcha bitch");
-    } else {
-        println!("Never mind")
-    }
+    let _bruh = "bruh";
 }
+
+// use std::fs;
+
+// fn main() {
+//     let contents = fs::read_to_string("testing/testing.fuck").unwrap();
+//     let mut found: bool = false;
+
+//     for line in contents.lines() {
+//         match line {
+//             "1" | "2" => {
+//                 found = true;
+//                 break;
+//             }
+
+//             // if not found
+//             _ => found = false,
+//         }
+//     }
+
+//     if found == true {
+//         println!("Gotcha bitch");
+//     } else {
+//         println!("Never mind")
+//     }
+// }
 
 // use rand::{thread_rng, Rng};
 // use std::io::{self, stdout, Write};

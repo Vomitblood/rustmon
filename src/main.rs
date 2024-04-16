@@ -5,11 +5,12 @@
 - `verbose` - Print colorscripts when generating
 
 ## `print` - Print a Pokemon colorscript
-- `name` - Select Pokemon by name
 - `big` - Print a bigger version of the colorscript
+- `id` - Print Pokemon by ID
 - `list` - Print a list of all Pokemon names
-- `random` - Print a random Pokemon colorscript
+- `name` - Print Pokemon by name
 - `no-title` - Do not print Pokemon name
+- `random` - Print a random Pokemon colorscript
 - `shiny` - Print the shiny version of the colorscript
 */
 
