@@ -82,11 +82,10 @@ pub fn fetch(extract_destination: &std::path::Path, verbose: bool) {
     };
 
     // cleanup
-    // TODO: uncomment
-    // match cleanup() {
-    //     Ok(_) => (),
-    //     Err(e) => eprintln!("Error cleaning up: {}", e),
-    // };
+    match cleanup() {
+        Ok(_) => (),
+        Err(e) => eprintln!("Error cleaning up: {}", e),
+    };
 }
 
 fn create_working_directory() -> std::io::Result<()> {
@@ -159,42 +158,6 @@ fn fetch_pokemon_json() -> Result<(), Box<dyn std::error::Error>> {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
-struct Slug {
-    eng: String,
-}
-
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
-struct Forms {
-    // ignoring actual details in the forms and just capturing form names
-}
-
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
-struct Generation {
-    forms: std::collections::HashMap<String, Forms>,
-}
-
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
-struct Pokemon {
-    idx: String,
-    slug: Slug,
-    #[serde(rename = "gen-8")]
-    gen_8: Generation,
-}
-
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
-struct PokemonCollection {
-    #[serde(flatten)]
-    entries: std::collections::HashMap<String, Pokemon>,
-}
-
-#[derive(serde::Serialize, Debug)]
-struct ProcessedPokemon {
-    pokedex: String,
-    name: String,
-    forms: Vec<String>,
-}
-
 fn process_pokemon_json(
     output_directory_path: &std::path::Path,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -222,7 +185,7 @@ fn process_pokemon_json(
 
 fn read_pokemon_file(
     file_path: &std::path::Path,
-) -> Result<PokemonCollection, Box<dyn std::error::Error>> {
+) -> Result<crate::structs::PokemonRawCollection, Box<dyn std::error::Error>> {
     // open the file in read only mode
     let file = std::fs::File::open(file_path)?;
     let reader = std::io::BufReader::new(file);
@@ -234,9 +197,9 @@ fn read_pokemon_file(
 }
 
 fn transform_pokemon_data(
-    pokemon_collection: &std::collections::HashMap<String, Pokemon>,
-) -> Vec<ProcessedPokemon> {
-    let mut processed_pokemons: Vec<ProcessedPokemon> = pokemon_collection
+    pokemon_collection: &std::collections::HashMap<String, crate::structs::PokemonRaw>,
+) -> Vec<crate::structs::Pokemon> {
+    let mut processed_pokemons: Vec<crate::structs::Pokemon> = pokemon_collection
         .iter()
         .map(|(_key, p)| {
             let mut forms = p
@@ -257,7 +220,7 @@ fn transform_pokemon_data(
                 forms.insert(0, "regular".to_string());
             }
 
-            ProcessedPokemon {
+            crate::structs::Pokemon {
                 // remove leading zeros from the pokedex number
                 pokedex: p.idx.trim_start_matches('0').to_string(),
                 // use the slug as the name

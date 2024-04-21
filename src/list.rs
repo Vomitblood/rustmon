@@ -1,15 +1,3 @@
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
-struct Pokemon {
-    pokedex: String,
-    name: String,
-    forms: Vec<String>,
-}
-
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
-struct PokemonList {
-    pokemons: Vec<Pokemon>,
-}
-
 pub fn print_pokemon_list() -> Result<(), serde_json::Error> {
     // open the file in read only mode with buffer
     let file = std::fs::File::open(crate::constants::DATA_DIRECTORY.join("pokemon.json"))
@@ -17,7 +5,7 @@ pub fn print_pokemon_list() -> Result<(), serde_json::Error> {
     let reader = std::io::BufReader::new(file);
 
     // parse json into pokemonlist struct
-    let pokemon_list: Vec<Pokemon> = serde_json::from_reader(reader)?;
+    let pokemon_list: Vec<crate::structs::Pokemon> = serde_json::from_reader(reader)?;
 
     // iterate through the vector and print the pokedex and name
     for pokemon in pokemon_list {
@@ -35,7 +23,8 @@ pub fn print_pokemon_forms(pokemon_name: &str) -> std::io::Result<()> {
     let reader = std::io::BufReader::new(file);
 
     // parse json into pokemonlist struct
-    let pokemon_list: Vec<Pokemon> = serde_json::from_reader(reader).expect("Failed to parse JSON");
+    let pokemon_list: Vec<crate::structs::Pokemon> =
+        serde_json::from_reader(reader).expect("Failed to parse JSON");
 
     // iterate through the list to find the specified pokemon and print its forms
     let mut found = false;
@@ -54,6 +43,8 @@ pub fn print_pokemon_forms(pokemon_name: &str) -> std::io::Result<()> {
     if !found {
         println!("No Pokemon found with the name '{}'.", pokemon_name);
         println!("Hint: Do `rustmon list` to see all available Pokemon.")
+    } else {
+        println!("\nHint: Pass in `--form` when using subcommand `print` to see the specific form of a Pokemon!");
     }
 
     return Ok(());

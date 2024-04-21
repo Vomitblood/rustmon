@@ -13,7 +13,7 @@
 - `no-title` - Do not print Pokemon name
 - `pokedex` - Print Pokemon by Pokedex number
 - `random` - Print a random Pokemon colorscript
-- `shiny` - Print the shiny version of the colorscript
+- `shiny` - Rate of printing the shiny version of the colorscript
 */
 
 /// Pokemon Colorscripts written in Rust
@@ -34,6 +34,11 @@ fn main() {
         // invoke bigchungus fetch function
         rustmon::fetch::fetch(extract_destination, verbose)
     } else if let Some(list_args) = args.subcommand_matches("list") {
+        // list
+
+        // validate files first
+        rustmon::validation::validate_files();
+
         let pokemon_name: &String = list_args.get_one::<String>("forms").unwrap();
         if pokemon_name.is_empty() {
             // list
@@ -56,22 +61,19 @@ fn main() {
         }
     } else if let Some(print_args) = args.subcommand_matches("print") {
         // print
+
+        // validate files first
+        rustmon::validation::validate_files();
+
         // declare and define variables from arguments
-        let big: bool = print_args.get_flag("big");
-        let id = print_args.get_one::<String>("id").unwrap();
-        let name = print_args.get_one::<String>("name").unwrap();
+        let big = print_args.get_flag("big");
+        let pokedex: u16 = *print_args.get_one::<u16>("pokedex").unwrap();
+        let name: &String = print_args.get_one::<String>("name").unwrap();
         let no_title: bool = print_args.get_flag("no-title");
         let random: bool = print_args.get_flag("random");
-        let shiny: bool = print_args.get_flag("shiny");
+        let shiny: f32 = *print_args.get_one::<f32>("shiny").unwrap();
 
-        println!("Big: {}", big);
-        println!("ID: {}", id);
-        println!("Name: {}", name);
-        println!("No title: {}", no_title);
-        println!("Random: {}", random);
-        println!("Shiny: {}", shiny);
-
-        rustmon::print::print();
+        rustmon::print::print(big, pokedex, name, no_title, random, shiny);
     }
 }
 
@@ -111,7 +113,8 @@ fn argument_parser() -> clap::ArgMatches {
                         .help("Print a list of forms of the specified Pokemon")
                         .short('f')
                         .long("forms")
-                        .default_value(""),
+                        .default_value("")
+                        .hide_default_value(true),
                 )
                 .after_help(
                     "Tip: Use `grep` to search for a specific Pokemon form!
@@ -124,20 +127,23 @@ For more advanced usage, use `less` or `more` to scroll through the list!",
             clap::Command::new("print")
                 .about("Print a Pokemon colorscript")
                 // print/big
-                .arg(clap::arg!(-b --big "Print a bigger version of the colorscript"))
+                .arg(
+                    clap::Arg::new("big")
+                        .help("Print a bigger version of the colorscript")
+                        .short('b')
+                        .long("big")
+                        .action(clap::ArgAction::SetTrue),
+                )
                 // print/name
                 .arg(
                     clap::Arg::new("name")
                         .help("Print Pokemon by name")
                         .short('n')
                         .long("name")
+                        .default_value("")
+                        .hide_default_value(true)
                         .conflicts_with("pokedex")
                         .conflicts_with("random"),
-                )
-                // print/random
-                .arg(
-                    clap::arg!(-r --random "Print a random Pokemon colorscript")
-                        .conflicts_with("name"),
                 )
                 // print/no-title
                 .arg(
@@ -146,17 +152,37 @@ For more advanced usage, use `less` or `more` to scroll through the list!",
                         .long("no-title")
                         .action(clap::ArgAction::SetTrue),
                 )
+                // print/random
+                .arg(
+                    clap::Arg::new("random")
+                        .help("Print a random Pokemon colorscript")
+                        .short('r')
+                        .long("random")
+                        .action(clap::ArgAction::SetTrue),
+                )
                 // print/pokedex
                 .arg(
                     clap::Arg::new("pokedex")
                         .help("Print Pokemon by Pokedex number")
                         .short('p')
                         .long("pokedex")
+                        .value_parser(clap::value_parser!(u16).range(0..))
+                        .default_value("0")
+                        .hide_default_value(true)
                         .conflicts_with("name")
                         .conflicts_with("random"),
                 )
                 // print/shiny
-                .arg(clap::arg!(-s --shiny "Print the shiny version of the colorscript")),
+                .arg(
+                    clap::Arg::new("shiny")
+                        .help(
+                            "Rate of printing the shiny version of the colorscript (e.g. 0.10 for 10% chance)",
+                        )
+                        .short('s')
+                        .long("shiny")
+                        .value_parser(clap::value_parser!(f32))
+                        .default_value("0.10"),
+                ),
         )
         // finalize
         .get_matches();
