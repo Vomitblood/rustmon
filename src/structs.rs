@@ -27,7 +27,7 @@ pub struct PokemonRawCollection {
     pub entries: std::collections::HashMap<String, PokemonRaw>,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
 pub struct Pokemon {
     pub pokedex: String,
     pub name: String,

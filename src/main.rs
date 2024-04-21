@@ -9,11 +9,12 @@
 
 ## `print` - Print a Pokemon colorscript
 - `big` - Print a bigger version of the colorscript
-- `name` - Print Pokemon by name
-- `no-title` - Do not print Pokemon name
-- `pokedex` - Print Pokemon by Pokedex number
-- `random` - Print a random Pokemon colorscript
+- `form` - Print Pokemon by list of space-separated forms. Follows the order of the names/Pokedex number specified. If not specified, it will print the regular form.
+- `hide-name` - Do not print Pokemon name
+- `name` - Print Pokemon by list of space-separated names. Use `random` to print a random Pokemon.
+- `pokedex` - Print Pokemon by list of space-separated Pokedex numbers. Use `0` to print a random Pokemon.
 - `shiny` - Rate of printing the shiny version of the colorscript
+- `spacing` - Number of spaces between colorscripts
 */
 
 /// Pokemon Colorscripts written in Rust
@@ -67,13 +68,15 @@ fn main() {
 
         // declare and define variables from arguments
         let big = print_args.get_flag("big");
-        let pokedex: u16 = *print_args.get_one::<u16>("pokedex").unwrap();
-        let name: &String = print_args.get_one::<String>("name").unwrap();
-        let no_title: bool = print_args.get_flag("no-title");
-        let random: bool = print_args.get_flag("random");
-        let shiny: f32 = *print_args.get_one::<f32>("shiny").unwrap();
+        let forms: Vec<&String> = print_args.get_many("form").unwrap().collect();
+        let hide_name: bool = print_args.get_flag("hide-name");
+        let names: Vec<&String> = print_args.get_many("name").unwrap().collect();
+        let pokedexes: Vec<u16> = print_args.get_many("pokedex").unwrap().copied().collect();
+        let shiny_rate: f32 = *print_args.get_one::<f32>("shiny").unwrap();
+        let spacing: u8 = *print_args.get_one::<u8>("spacing").unwrap();
 
-        rustmon::print::print(big, pokedex, name, no_title, random, shiny);
+        // print
+        rustmon::print::print(big, forms, hide_name, names, pokedexes, shiny_rate, spacing);
     }
 }
 
@@ -126,6 +129,7 @@ For more advanced usage, use `less` or `more` to scroll through the list!",
         .subcommand(
             clap::Command::new("print")
                 .about("Print a Pokemon colorscript")
+                .arg_required_else_help(true)
                 // print/big
                 .arg(
                     clap::Arg::new("big")
@@ -134,43 +138,47 @@ For more advanced usage, use `less` or `more` to scroll through the list!",
                         .long("big")
                         .action(clap::ArgAction::SetTrue),
                 )
+                // print/form
+                .arg(
+                    clap::Arg::new("form")
+                        .help("Print Pokemon by list of space-separated forms. Follows the order of the names/Pokedex number specified. If not specified, it will print the regular form. Has no effect on random Pokemon.")
+                        .short('f')
+                        .long("form")
+                        .default_value("regular")
+                        .multiple_values(true)
+                        .requires("name_or_pokedex"),
+                    )
+                // print/hide-name
+                .arg(
+                    clap::Arg::new("hide-name")
+                        .help("Do not print Pokemon name")
+                        .long("hide-name")
+                        .action(clap::ArgAction::SetTrue),
+                )
                 // print/name
                 .arg(
                     clap::Arg::new("name")
-                        .help("Print Pokemon by name")
+                        .help("Print Pokemon by list of space-separated names. Use `random` to print a random Pokemon.")
                         .short('n')
                         .long("name")
                         .default_value("")
                         .hide_default_value(true)
+                        .multiple_values(true)
                         .conflicts_with("pokedex")
-                        .conflicts_with("random"),
-                )
-                // print/no-title
-                .arg(
-                    clap::Arg::new("no-title")
-                        .help("Do not print Pokemon name")
-                        .long("no-title")
-                        .action(clap::ArgAction::SetTrue),
-                )
-                // print/random
-                .arg(
-                    clap::Arg::new("random")
-                        .help("Print a random Pokemon colorscript")
-                        .short('r')
-                        .long("random")
-                        .action(clap::ArgAction::SetTrue),
                 )
                 // print/pokedex
                 .arg(
                     clap::Arg::new("pokedex")
-                        .help("Print Pokemon by Pokedex number")
+                        .help("Print Pokemon by list of space-separated Pokedex numbers. Use `0` to print a random Pokemon.")
                         .short('p')
                         .long("pokedex")
-                        .value_parser(clap::value_parser!(u16).range(0..))
+                        // TODO: use a dynamic range instead of 0..906
+                        // try not to hardcode?
+                        .value_parser(clap::value_parser!(u16).range(0..906))
                         .default_value("0")
                         .hide_default_value(true)
+                        .multiple_values(true)
                         .conflicts_with("name")
-                        .conflicts_with("random"),
                 )
                 // print/shiny
                 .arg(
@@ -181,9 +189,25 @@ For more advanced usage, use `less` or `more` to scroll through the list!",
                         .short('s')
                         .long("shiny")
                         .value_parser(clap::value_parser!(f32))
-                        .default_value("0.10"),
-                ),
+                        .default_value("0.00"),
+                )
+                // print/spacing
+                .arg(
+                    clap::Arg::new("spacing")
+                        .help(
+                            "Number of spaces between colorscripts",
+                        )
+                        .long("spacing")
+                        .value_parser(clap::value_parser!(u8).range(0..21))
+                        .default_value("4"),
+                )
+                .group(
+                    clap::ArgGroup::new("name_or_pokedex")
+                        .args(&["name", "pokedex"])
+                        .required(false),
+                )
         )
+        .subcommand_required(true)
         // finalize
         .get_matches();
 }
