@@ -1,4 +1,5 @@
 use rand::prelude::SliceRandom;
+use rand::Rng;
 use rand::SeedableRng;
 use std::io::BufRead;
 use std::io::Read;
@@ -41,6 +42,11 @@ pub fn print(
             pokedexes.clone()
         };
 
+        // process the pokedexes list
+        // iterate through the pokedexes list, if value is 0, then generate a random number between 1 and 905
+        // if the value is not 0, then use the value as is
+        let pokedexes = process_pokedexes_list(pokedexes);
+
         // process the forms list
         // the length of the forms list should be the same as the pokedexes list, resize with `regular` if different length
         // if the form is not available for the pokemon then print the available forms and exit
@@ -49,11 +55,11 @@ pub fn print(
         // generate a list of slugs
         let slugs = generate_slug_list(big, forms, &pokedexes, shiny_rate);
 
-        println!("{:?}", slugs);
-
+        // print the names of the slugs, separated by comma
         print_name(&slugs);
 
-        print_ascii_side_by_side(&slugs, spacing).unwrap();
+        // print the actual thing
+        print_colorscripts(&slugs, spacing).unwrap();
     }
 }
 
@@ -171,6 +177,19 @@ fn is_shiny(shiny_rate: f32) -> bool {
     return random_number < shiny_rate;
 }
 
+fn process_pokedexes_list(pokedexes: Vec<u16>) -> Vec<u16> {
+    let mut pokedexes_processed: Vec<u16> = pokedexes.clone();
+
+    for i in 0..pokedexes.len() {
+        if pokedexes[i] == 0 {
+            let random_pokedex = rand::thread_rng().gen_range(1..906);
+            pokedexes_processed[i] = random_pokedex;
+        }
+    }
+
+    return pokedexes_processed;
+}
+
 fn process_forms_list(pokedexes: &Vec<u16>, forms: Vec<&String>) -> Vec<String> {
     let mut forms_processed: Vec<String> = forms.iter().map(|s| s.to_string()).collect();
 
@@ -263,7 +282,7 @@ fn print_name(paths: &Vec<std::path::PathBuf>) {
     println!("{}", output);
 }
 
-fn print_ascii_side_by_side(paths: &Vec<std::path::PathBuf>, spacing: u8) -> std::io::Result<()> {
+fn print_colorscripts(paths: &Vec<std::path::PathBuf>, spacing: u8) -> std::io::Result<()> {
     // open all files and create BufReaders
     let mut readers: Vec<_> = paths
         .iter()
