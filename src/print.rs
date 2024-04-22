@@ -55,8 +55,10 @@ pub fn print(
         // generate a list of slugs
         let slugs = generate_slug_list(big, forms, &pokedexes, shiny_rate);
 
-        // print the names of the slugs, separated by comma
-        print_name(&slugs);
+        // if hide_name is false then print the names of the slugs, separated by comma
+        if !hide_name {
+            print_name(&slugs);
+        }
 
         // print the actual thing
         print_colorscripts(&slugs, spacing).unwrap();
@@ -324,6 +326,9 @@ fn print_colorscripts(
         // finally print the thing
         println!("{}", line_to_print);
     }
+
+    // reset terminal color by printing a reset code
+    println!("\x1b[0m");
 
     Ok(())
 }
