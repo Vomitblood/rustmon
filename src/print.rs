@@ -259,31 +259,71 @@ fn print_name(paths: &[std::path::PathBuf]) {
     println!("{}", output);
 }
 
-fn print_colorscripts(paths: &[std::path::PathBuf], spacing: u8) -> std::io::Result<()> {
-    // open all files and create BufReaders
-    let mut readers: Vec<_> = paths
-        .iter()
-        .map(std::fs::File::open)
-        .filter_map(|result| result.ok())
-        .map(std::io::BufReader::new)
-        .collect();
+// I HATE ANSI ESCAPE CHARACTERS
+fn print_colorscripts(
+    paths: &Vec<std::path::PathBuf>,
+    spacing: u8,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let mut max_widths = vec![];
+    let mut max_height = 0;
+    let mut file_contents: Vec<Vec<String>> = vec![];
 
-    // create a string for spacing
+    // first read all files and calculate maximum widths and heights by iterating through
+    // MUST IGNORE ANSI ESCAPE CODES❗❗❗
+    for path in paths {
+        let file = std::fs::File::open(path)?;
+        let reader = std::io::BufReader::new(file);
+        // put all the lines in a vector
+        let mut lines: Vec<String> = vec![];
+        let mut max_width = 0;
+
+        // get the longest line length
+        for line in reader.lines() {
+            let line = line?;
+            // remove ansi escape codes for width calculation
+            let plain_line = regex::Regex::new("\x1b\\[[^m]*m")?.replace_all(&line, "");
+            max_width = max_width.max(plain_line.chars().count());
+            lines.push(line);
+        }
+
+        // push the max width and lines to the respective vectors
+        max_widths.push(max_width);
+        max_height = max_height.max(lines.len());
+        file_contents.push(lines);
+    }
+
+    // construct spacing string
     let separator = " ".repeat(spacing as usize);
 
-    // one line by one line
-    let mut lines: Vec<String> = vec![];
-    loop {
-        lines.clear();
-        for reader in &mut readers {
-            let mut line = String::new();
-            if reader.read_line(&mut line)? > 0 {
-                lines.push(line.trim_end().to_string());
-            } else {
-                // End of file reached
-                return Ok(());
+    // print each combined line
+    for line_index in 0..max_height {
+        let mut line_to_print = String::new();
+
+        // construct the combined line
+        for (file_index, lines) in file_contents.iter().enumerate() {
+            if line_index < lines.len() {
+                line_to_print.push_str(&lines[line_index]);
+            }
+
+            // pad the rest of the line if this artwork is shorter
+            if line_index >= lines.len()
+                || line_index < lines.len()
+                    && lines[line_index].chars().count() < max_widths[file_index]
+            {
+                let current_length = lines.get(line_index).map_or(0, |l| l.chars().count());
+                line_to_print.push_str(&" ".repeat(max_widths[file_index] - current_length));
+            }
+
+            // check if this is the last file to print
+            if file_index < file_contents.len() - 1 {
+                // do not add separator to the last file
+                line_to_print.push_str(&separator);
             }
         }
-        println!("{}", lines.join(&separator));
+
+        // finally print the thing
+        println!("{}", line_to_print);
     }
+
+    Ok(())
 }
