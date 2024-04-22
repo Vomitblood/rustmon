@@ -2,7 +2,7 @@ pub fn validate_files() {
     match validate_pokemon_json() {
         Ok(_) => {}
         Err(e) => {
-            eprintln!("Error: {}", e);
+            eprintln!("Error: {e}");
             std::process::exit(1);
         }
     };
@@ -10,7 +10,7 @@ pub fn validate_files() {
     match validate_colorscripts_directory() {
         Ok(_) => {}
         Err(e) => {
-            eprintln!("Error: {}", e);
+            eprintln!("Error: {e}");
             std::process::exit(1);
         }
     };

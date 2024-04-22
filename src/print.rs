@@ -26,7 +26,9 @@ pub fn print(
         random_lite().unwrap();
     } else {
         // convert list of names to list of pokedex numbers
-        let pokedexes = if !names[0].is_empty() {
+        let pokedexes = if names[0].is_empty() {
+            pokedexes.clone()
+        } else {
             let mut pokedexes: Vec<u16> = Vec::new();
             for name in names {
                 match find_pokedex_by_pokemon(name) {
@@ -38,8 +40,6 @@ pub fn print(
                 }
             }
             pokedexes
-        } else {
-            pokedexes.clone()
         };
 
         // process the pokedexes list
@@ -182,7 +182,7 @@ fn process_forms_list(pokedexes: &[u16], forms: Vec<&String>) -> Vec<String> {
             // consider using crate::list::print_pokemon_forms(pokemon_name)
             println!("Available forms for {}:", pokemon.name);
             for available_form in &pokemon.forms {
-                println!(" - {}", available_form);
+                println!(" - {available_form}");
             }
             std::process::exit(1);
         }
@@ -223,7 +223,7 @@ fn slug_generator(big: bool, form: String, name: String, shiny_rate: f32) -> std
     path.push(crate::constants::DATA_DIRECTORY.join("colorscripts"));
     path.push(&big);
     path.push(shiny_directory);
-    path.push(format!("{}{}", name, form));
+    path.push(format!("{name}{form}"));
 
     path
 }

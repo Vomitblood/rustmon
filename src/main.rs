@@ -30,7 +30,7 @@ fn main() {
 
         // display selections
         println!("Extract destination: {}", extract_destination.display());
-        println!("Verbose: {}", verbose);
+        println!("Verbose: {verbose}");
 
         // invoke bigchungus fetch function
         rustmon::fetch::fetch(extract_destination, verbose)
@@ -44,9 +44,9 @@ fn main() {
         if pokemon_name.is_empty() {
             // list
             match rustmon::list::print_pokemon_list() {
-                Ok(_) => {}
+                Ok(()) => {}
                 Err(e) => {
-                    eprintln!("Error: {}", e);
+                    eprintln!("Error: {e}");
                     std::process::exit(1);
                 }
             }
@@ -55,7 +55,7 @@ fn main() {
             match rustmon::list::print_pokemon_forms(pokemon_name) {
                 Ok(_) => {}
                 Err(e) => {
-                    eprintln!("Error: {}", e);
+                    eprintln!("Error: {e}");
                     std::process::exit(1);
                 }
             }
