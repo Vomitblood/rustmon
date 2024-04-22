@@ -33,9 +33,9 @@ This is the Python implementation:
 - Fetch the colorscript of a Pokemon from the internet.
 - Extract to a custom location for your own use.
 
-## Coming soon
+## Say
 
-- Pokemonsay, inspired by cowsay. Will be accessible by the subcommand `say`.
+- Pokemonsay, inspired by cowsay. Pipe text into it or use `--text` to make a Pokemon say it.
 
 ## Credits
 
