@@ -14,7 +14,7 @@ pub fn print_pokemon_list() -> Result<(), serde_json::Error> {
 
     println!("\nHint: Having trouble finding a Pokemon? Pass in --help to see tips!");
 
-    return Ok(());
+    Ok(())
 }
 
 pub fn print_pokemon_forms(pokemon_name: &str) -> std::io::Result<()> {
@@ -47,5 +47,5 @@ pub fn print_pokemon_forms(pokemon_name: &str) -> std::io::Result<()> {
         println!("\nHint: Pass in `--form` when using subcommand `print` to see the specific form of a Pokemon!");
     }
 
-    return Ok(());
+    Ok(())
 }

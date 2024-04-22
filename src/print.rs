@@ -14,10 +14,10 @@ pub fn print(
     spacing: u8,
 ) {
     // decide which function to call
-    if big == false
+    if !big
         // uber fast random
         && forms.len() == 1
-        && hide_name == false
+        && !hide_name
         && (names.len() == 1 && pokedexes.len() == 1)
         && shiny_rate == 0.0
         && forms[0] == "regular"
@@ -67,7 +67,7 @@ fn random_lite() -> std::io::Result<()> {
     let path = crate::constants::DATA_DIRECTORY.join("colorscripts/small/regular/");
     let mut files: Vec<std::path::PathBuf> = Vec::new();
 
-    for entry in std::fs::read_dir(&path)? {
+    for entry in std::fs::read_dir(path)? {
         let dir_entry = entry?;
         files.push(dir_entry.path());
     }
@@ -117,13 +117,13 @@ fn get_pokemon_data(pokedex_number: u16) -> crate::structs::Pokemon {
         pokemons.get(pokedex_number as usize - 1).unwrap().clone();
 
     // return the data
-    return pokemon_data;
+    pokemon_data
 }
 
 fn find_pokedex_by_pokemon(pokemon_name: &str) -> Result<String, Box<dyn std::error::Error>> {
     // handle random
     if pokemon_name == "random" {
-        return Ok("0".to_string());
+        Ok("0".to_string())
     } else {
         // read the file
         let mut file = std::fs::File::open(crate::constants::DATA_DIRECTORY.join("pokemon.json"))?;
@@ -142,7 +142,7 @@ fn find_pokedex_by_pokemon(pokemon_name: &str) -> Result<String, Box<dyn std::er
         }
 
         // if not found the return an error
-        return Err(format!("Pokemon {} not found", pokemon_name).into());
+        Err(format!("Pokemon {} not found", pokemon_name).into())
     }
 }
 
@@ -151,7 +151,7 @@ fn is_shiny(shiny_rate: f32) -> bool {
     let random_number = rand::random::<f32>();
 
     // if the random number is less than the shiny rate then return true
-    return random_number < shiny_rate;
+    random_number < shiny_rate
 }
 
 fn process_pokedexes_list(pokedexes: Vec<u16>) -> Vec<u16> {
@@ -164,10 +164,10 @@ fn process_pokedexes_list(pokedexes: Vec<u16>) -> Vec<u16> {
         }
     }
 
-    return pokedexes_processed;
+    pokedexes_processed
 }
 
-fn process_forms_list(pokedexes: &Vec<u16>, forms: Vec<&String>) -> Vec<String> {
+fn process_forms_list(pokedexes: &[u16], forms: Vec<&String>) -> Vec<String> {
     let mut forms_processed: Vec<String> = forms.iter().map(|s| s.to_string()).collect();
 
     // ensure forms_processed has the same length as pokedexes
@@ -188,7 +188,7 @@ fn process_forms_list(pokedexes: &Vec<u16>, forms: Vec<&String>) -> Vec<String> 
         }
     }
 
-    return forms_processed;
+    forms_processed
 }
 
 fn slug_generator(big: bool, form: String, name: String, shiny_rate: f32) -> std::path::PathBuf {
@@ -221,17 +221,17 @@ fn slug_generator(big: bool, form: String, name: String, shiny_rate: f32) -> std
     // construct the path using PathBuf
     let mut path = std::path::PathBuf::new();
     path.push(crate::constants::DATA_DIRECTORY.join("colorscripts"));
-    path.push(format!("{}", big));
+    path.push(&big);
     path.push(shiny_directory);
     path.push(format!("{}{}", name, form));
 
-    return path;
+    path
 }
 
 fn generate_slug_list(
     big: bool,
     forms: Vec<String>,
-    pokedexes: &Vec<u16>,
+    pokedexes: &[u16],
     shiny_rate: f32,
 ) -> Vec<std::path::PathBuf> {
     let mut slugs: Vec<std::path::PathBuf> = Vec::new();
@@ -245,10 +245,10 @@ fn generate_slug_list(
         slugs.push(slug);
     }
 
-    return slugs;
+    slugs
 }
 
-fn print_name(paths: &Vec<std::path::PathBuf>) {
+fn print_name(paths: &[std::path::PathBuf]) {
     let last_parts: Vec<&str> = paths
         .iter()
         .filter_map(|path| path.file_name())
@@ -259,13 +259,13 @@ fn print_name(paths: &Vec<std::path::PathBuf>) {
     println!("{}", output);
 }
 
-fn print_colorscripts(paths: &Vec<std::path::PathBuf>, spacing: u8) -> std::io::Result<()> {
+fn print_colorscripts(paths: &[std::path::PathBuf], spacing: u8) -> std::io::Result<()> {
     // open all files and create BufReaders
     let mut readers: Vec<_> = paths
         .iter()
-        .map(|path| std::fs::File::open(path))
+        .map(std::fs::File::open)
         .filter_map(|result| result.ok())
-        .map(|file| std::io::BufReader::new(file))
+        .map(std::io::BufReader::new)
         .collect();
 
     // create a string for spacing

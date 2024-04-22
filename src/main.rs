@@ -95,7 +95,7 @@ fn argument_parser() -> clap::ArgMatches {
                         .help("eXtract the colorscripts archive to a custom location")
                         .short('x')
                         .long("extract-destination")
-                        .default_value(&*rustmon::constants::DATA_DIRECTORY.to_str().unwrap()),
+                        .default_value(rustmon::constants::DATA_DIRECTORY.to_str().unwrap()),
                 )
                 // fetch/verbose
                 .arg(

@@ -36,13 +36,8 @@ fn validate_pokemon_json() -> Result<(), Box<dyn std::error::Error>> {
         serde_json::from_reader(reader);
 
     match pokemon_data {
-        Ok(_) => return Ok(()),
-        Err(_) => {
-            return Err(format!(
-                "JSON structure is not correct. Please run the `fetch` subcommand."
-            )
-            .into())
-        }
+        Ok(_) => Ok(()),
+        Err(_) => Err("JSON structure is not correct. Please run the `fetch` subcommand.".into()),
     }
 }
 
@@ -54,11 +49,9 @@ fn validate_colorscripts_directory() -> Result<(), String> {
     for subdirectory in subdirectories.iter() {
         let path = base_path.join(subdirectory);
         if !path.exists() {
-            return Err(format!(
-                "Directory does not exist. Please run the `fetch` subcommand."
-            ));
+            return Err("Directory does not exist. Please run the `fetch` subcommand.".into());
         }
     }
 
-    return Ok(());
+    Ok(())
 }

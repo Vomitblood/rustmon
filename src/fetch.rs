@@ -96,7 +96,7 @@ fn create_working_directory() -> std::io::Result<()> {
     // create intermediate directories also
     std::fs::create_dir(&*crate::constants::CACHE_DIRECTORY)?;
     println!("Created working directory");
-    return Ok(());
+    Ok(())
 }
 
 fn create_output_directory(output_directory_path: &std::path::Path) -> std::io::Result<()> {
@@ -106,7 +106,7 @@ fn create_output_directory(output_directory_path: &std::path::Path) -> std::io::
     );
     std::fs::create_dir_all(output_directory_path)?;
     println!("Created output directory");
-    return Ok(());
+    Ok(())
 }
 
 fn fetch_pokemon_json() -> Result<(), Box<dyn std::error::Error>> {
@@ -193,7 +193,7 @@ fn read_pokemon_file(
     // deserialize the into pokemoncollection
     let collection = serde_json::from_reader(reader)?;
 
-    return Ok(collection);
+    Ok(collection)
 }
 
 fn transform_pokemon_data(
@@ -240,7 +240,7 @@ fn transform_pokemon_data(
             .cmp(&b.pokedex.parse::<u32>().unwrap_or(0))
     });
 
-    return processed_pokemons;
+    processed_pokemons
 }
 
 fn fetch_colorscripts_archive(target_url: &str) -> Result<(), Box<dyn std::error::Error>> {
@@ -333,10 +333,10 @@ fn extract_colorscripts_archive() -> zip::result::ZipResult<()> {
             if !file.name().ends_with('/') {
                 if let Some(p) = outpath.parent() {
                     if !p.exists() {
-                        std::fs::create_dir_all(&p)?;
+                        std::fs::create_dir_all(p)?;
                     }
                 }
-                let mut outfile = std::fs::File::create(&outpath)?;
+                let mut outfile = std::fs::File::create(outpath)?;
                 std::io::copy(&mut file, &mut outfile)?;
             };
         };
@@ -344,7 +344,7 @@ fn extract_colorscripts_archive() -> zip::result::ZipResult<()> {
 
     println!("Extracted colorscripts archive");
 
-    return Ok(());
+    Ok(())
 }
 
 fn crop_all_images_in_directory() -> std::io::Result<()> {
@@ -368,9 +368,9 @@ fn crop_all_images_in_directory() -> std::io::Result<()> {
             .join("cropped_images")
             .join(subdirectory);
 
-        std::fs::create_dir_all(&output_subdirectory_path)?;
+        std::fs::create_dir_all(output_subdirectory_path)?;
 
-        for entry in std::fs::read_dir(&input_subdirectory_path)? {
+        for entry in std::fs::read_dir(input_subdirectory_path)? {
             let entry = entry?;
             let path = entry.path();
 
@@ -381,7 +381,7 @@ fn crop_all_images_in_directory() -> std::io::Result<()> {
 
     println!("Cropped images");
 
-    return Ok(());
+    Ok(())
 }
 
 fn crop_to_content(
@@ -436,7 +436,7 @@ fn crop_to_content(
     // write the cropped image
     cropped_img.save(output_path)?;
 
-    return Ok(cropped_img);
+    Ok(cropped_img)
 }
 
 fn convert_images_to_ascii(
@@ -458,7 +458,7 @@ fn convert_images_to_ascii(
 
             std::fs::create_dir_all(&output_subdirectory_path)?;
 
-            for entry in std::fs::read_dir(&input_subdirectory_path)? {
+            for entry in std::fs::read_dir(input_subdirectory_path)? {
                 let entry = entry?;
                 let path = entry.path();
 
@@ -471,7 +471,7 @@ fn convert_images_to_ascii(
                     };
 
                     // print for fun
-                    if verbose == true {
+                    if verbose {
                         println!("{}", ascii_art);
                     };
 
@@ -485,7 +485,7 @@ fn convert_images_to_ascii(
 
     println!("Converted images to ASCII");
 
-    return Ok(());
+    Ok(())
 }
 
 fn convert_image_to_unicode_small(img: &image::DynamicImage) -> String {
@@ -520,7 +520,7 @@ fn convert_image_to_unicode_small(img: &image::DynamicImage) -> String {
         unicode_sprite.push('\n'); // New line for each row, plus reset might be added here too if colors extend beyond.
     }
 
-    return unicode_sprite;
+    unicode_sprite
 }
 
 fn convert_image_to_unicode_big(img: &image::DynamicImage) -> String {
@@ -541,7 +541,7 @@ fn convert_image_to_unicode_big(img: &image::DynamicImage) -> String {
         unicode_sprite.push('\n');
     }
 
-    return unicode_sprite;
+    unicode_sprite
 }
 
 fn get_color_escape_code(pixel: image::Rgba<u8>, background: bool) -> String {
@@ -569,5 +569,5 @@ fn cleanup() -> std::io::Result<()> {
 
     println!("Cleaned up");
 
-    return Ok(());
+    Ok(())
 }
