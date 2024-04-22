@@ -15,6 +15,9 @@
 - `pokedex` - Print Pokemon by list of space-separated Pokedex numbers. Use `0` to print a random Pokemon.
 - `shiny` - Rate of printing the shiny version of the colorscript
 - `spacing` - Number of spaces between colorscripts
+
+## `say` - Print a speaking Pokemon
+- `text` - Input text for Pokemon to say
 */
 
 /// Pokemon Colorscripts written in Rust
@@ -33,7 +36,7 @@ fn main() {
         println!("Verbose: {verbose}");
 
         // invoke bigchungus fetch function
-        rustmon::fetch::fetch(extract_destination, verbose)
+        rustmon::fetch::fetch(extract_destination, verbose);
     } else if let Some(list_args) = args.subcommand_matches("list") {
         // list
 
@@ -49,7 +52,7 @@ fn main() {
                     eprintln!("Error: {e}");
                     std::process::exit(1);
                 }
-            }
+            };
         } else {
             // list/forms
             match rustmon::list::print_pokemon_forms(pokemon_name) {
@@ -58,7 +61,7 @@ fn main() {
                     eprintln!("Error: {e}");
                     std::process::exit(1);
                 }
-            }
+            };
         }
     } else if let Some(print_args) = args.subcommand_matches("print") {
         // print
@@ -77,6 +80,15 @@ fn main() {
 
         // print
         rustmon::print::print(big, forms, hide_name, names, pokedexes, shiny_rate, spacing);
+    } else if let Some(say_args) = args.subcommand_matches("say") {
+        // say
+
+        // validate files first
+        rustmon::validation::validate_files();
+
+        let text: &String = say_args.get_one::<String>("text").unwrap();
+
+        rustmon::say::say(text);
     }
 }
 
@@ -205,6 +217,25 @@ For more advanced usage, use `less` or `more` to scroll through the list!",
                     clap::ArgGroup::new("name_or_pokedex")
                         .args(&["name", "pokedex"])
                         .required(false),
+                )
+        )
+        // say subcommand
+        .subcommand(
+            clap::Command::new("say")
+                .about("Print a speaking Pokemon")
+                .after_help(
+                    "Tip: Pipe the output to `rustmon say` to see the Pokemon speak!
+Example: `echo \"Never gonna give you up\" | rustmon say`"
+                )
+                // say/text
+                .arg(
+                    clap::Arg::new("text")
+                        .help("Input text for Pokemon to say")
+                        .short('t')
+                        .long("text")
+                        .default_value("")
+                        .hide_default_value(true)
+                        .required(false)
                 )
         )
         .subcommand_required(true)
