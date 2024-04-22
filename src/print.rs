@@ -120,29 +120,6 @@ fn get_pokemon_data(pokedex_number: u16) -> crate::structs::Pokemon {
     return pokemon_data;
 }
 
-fn find_pokemon_by_pokedex(
-    pokedex_number_string: &str,
-) -> Result<String, Box<dyn std::error::Error>> {
-    // handle random
-    if pokedex_number_string == "0" {
-        return Ok("random".to_string());
-    } else {
-        // read the file
-        let mut file = std::fs::File::open(crate::constants::DATA_DIRECTORY.join("pokemon.json"))?;
-        let mut contents = String::new();
-        file.read_to_string(&mut contents)?;
-
-        // deserialize into the struct
-        let pokemons: Vec<crate::structs::Pokemon> = serde_json::from_str(&contents)?;
-
-        let pokedex_number = pokedex_number_string.parse::<usize>().unwrap();
-
-        let pokemon_data = pokemons.get(pokedex_number).unwrap();
-
-        return Ok(pokemon_data.name.clone());
-    }
-}
-
 fn find_pokedex_by_pokemon(pokemon_name: &str) -> Result<String, Box<dyn std::error::Error>> {
     // handle random
     if pokemon_name == "random" {
