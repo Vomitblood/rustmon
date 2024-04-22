@@ -3,7 +3,7 @@
 pkgname=rustmon-git
 pkgdesc="Pokemon Colorscripts written in Rust"
 _gitname=rustmon
-pkgver=r41.bc2beb1
+pkgver=r46.5aa2597
 pkgrel=1
 arch=('x86_64')
 url="https://github.com/Vomitblood/$_gitname"
@@ -22,6 +22,7 @@ pkgver() {
 }
 
 build() {
+  export CFLAGS="-fPIE"
   cd "$srcdir/$_gitname"
   # build main program
   cargo build --release --bin rustmon
