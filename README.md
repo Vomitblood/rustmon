@@ -1,20 +1,41 @@
 # Rustmon
 
-*For educational purposes*  
-A simple colorscript written in Rust.
+A feature-rich, versatile colorscript printer written in Rust.
 
-Inspired by [phoneybadger's pokemon-coloscripts](https://gitlab.com/phoneybadger/pokemon-colorscripts).
+Inspired by [phoneybadger's pokemon-colorscripts](https://gitlab.com/phoneybadger/pokemon-colorscripts).
 
 ## Performance
 
 This is written in Rust, while the original is written in Python.  
-This implementation is up to 8 times faster than the original.  
+This implementation is up to 10 times faster than the original.  
+(Sixteen times the detail)  
+
+This is the Rust implementation:
+![rust implementation](img/screenshot_220424_202018.png)
 
 This is the Python implementation:
 ![python implementation](img/screenshot_250324_132129.png)
 
-This is the Rust implementation:
-![rust implementation](img/screenshot_250324_132205.png)
+## Features
+
+## Printing
+
+- Print a colorscript of a Pokemon.
+- Print a chungus colorscript of a Pokemon.
+- Specify your custom shiny rate.
+- Specify the colorscript by Pokemon name.
+- Specify the colorscript by Pokedex ID.
+- Print multiple colorscripts at once in a row.
+- Print different colorscript forms of a Pokemon.
+
+## Fetching
+
+- Fetch the colorscript of a Pokemon from the internet.
+- Extract to a custom location for your own use.
+
+## Coming soon
+
+- Pokemonsay, inspired by cowsay. Will be accessible by the subcommand `say`.
 
 ## Credits
 
