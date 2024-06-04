@@ -157,7 +157,7 @@ For more advanced usage, use `less` or `more` to scroll through the list!",
                         .short('f')
                         .long("form")
                         .default_value("regular")
-                        .multiple_values(true)
+                        .value_delimiter(' ')
                         .requires("name_or_pokedex"),
                     )
                 // print/hide-name
@@ -175,7 +175,7 @@ For more advanced usage, use `less` or `more` to scroll through the list!",
                         .long("name")
                         .default_value("")
                         .hide_default_value(true)
-                        .multiple_values(true)
+                        .value_delimiter(' ')
                         .conflicts_with("pokedex")
                 )
                 // print/pokedex
@@ -189,7 +189,7 @@ For more advanced usage, use `less` or `more` to scroll through the list!",
                         .value_parser(clap::value_parser!(u16).range(0..906))
                         .default_value("0")
                         .hide_default_value(true)
-                        .multiple_values(true)
+                        .value_delimiter(' ')
                         .conflicts_with("name")
                 )
                 // print/shiny
@@ -215,7 +215,7 @@ For more advanced usage, use `less` or `more` to scroll through the list!",
                 )
                 .group(
                     clap::ArgGroup::new("name_or_pokedex")
-                        .args(&["name", "pokedex"])
+                        .args(["name", "pokedex"])
                         .required(false),
                 )
         )
