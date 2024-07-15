@@ -1,0 +1,80 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Add toolchains to Rustup
+        run: rustup target add x86_64-unknown-linux-gnu
+
+      - name: Build for Linux
+        run: cargo build --release --target x86_64-unknown-linux-gnu
+
+      - name: Upload rustmon artifact (Linux)
+        uses: actions/upload-artifact@v2
+        with:
+          name: rustmon
+          path: ./target/x86_64-unknown-linux-gnu/release/rustmon
+
+      - name: Upload minimon artifact (Linux)
+        uses: actions/upload-artifact@v2
+        with:
+          name: minimon
+          path: ./target/x86_64-unknown-linux-gnu/release/minimon
+
+  build-windows:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Install dependencies for cross-compilation
+        run: sudo apt-get update && sudo apt-get install -y gcc-mingw-w64-x86-64
+
+      - name: Add toolchains to Rustup
+        run: rustup target add x86_64-pc-windows-gnu x86_64-apple-darwin
+
+      - name: Build for Windows
+        run: cargo build --release --target x86_64-pc-windows-gnu
+
+      - name: Get Variables
+        run: |
+          echo "TAG_NAME=commit-$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Upload rustmon artifact (Windows)
+        uses: actions/upload-artifact@v2
+        with:
+          name: rustmon.exe
+          path: ./target/x86_64-pc-windows-gnu/release/rustmon.exe
+
+      - name: Upload minimon artifact (Windows)
+        uses: actions/upload-artifact@v2
+        with:
+          name: minimon.exe
+          path: ./target/x86_64-pc-windows-gnu/release/minimon.exe
