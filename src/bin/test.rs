@@ -2,12 +2,12 @@ use image::GenericImageView;
 use std::io::Write;
 
 fn convert_images_to_ascii() -> std::io::Result<()> {
-    let path = std::path::Path::new("/home/vomitblood/Pictures/staging/vomitbloodnft 1080p.png");
+    let path = std::path::Path::new("/home/vomitblood/Pictures/bad-rats.jpg");
 
     let img = image::open(path).unwrap();
     let ascii_art = convert_image_to_unicode_small(&img);
 
-    let output_path = std::path::Path::new("/home/vomitblood/Pictures/staging/vomitbloodnft.txt");
+    let output_path = std::path::Path::new("/home/vomitblood/Downloads/bruh.txt");
     let mut file = std::fs::File::create(output_path)?;
     file.write_all(ascii_art.as_bytes())?;
 
